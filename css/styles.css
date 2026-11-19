@@ -1,0 +1,47 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #E7E2DA;
+  color: #1F2937;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes scanline {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(108px); }
+}
+
+.animate-scan {
+  animation: scanline 2.2s ease-in-out infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* IMPRESIÓN NATIVA PWA */
+@media print {
+  @page { margin: 8mm; }
+  body { background: #FFFFFF !important; }
+  body * { visibility: hidden !important; }
+  #printable-qr-card, #printable-qr-card * {
+    visibility: visible !important;
+  }
+  #printable-qr-card {
+    position: fixed !important;
+    left: 50% !important;
+    top: 24px !important;
+    transform: translateX(-50%) !important;
+    width: 280px !important;
+    max-width: 280px !important;
+    border: 4px solid #1B4332 !important;
+    border-radius: 18px !important;
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+    z-index: 9999 !important;
+  }
+}
