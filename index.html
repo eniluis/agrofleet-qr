@@ -9,19 +9,15 @@
   <meta name="apple-mobile-web-app-title" content="AgroFleet QR" />
   <title>AgroFleet QR · Control Multi-Rancho de Diésel y Mantenimiento</title>
 
-  <!-- Enlace al Manifiesto PWA e ícono móvil -->
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2316/2316674.png" />
+  <link rel="stylesheet" href="css/styles.css" />
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <!-- Librería para lectura real de QR por cámara -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- Librería para generación de códigos QR físicos -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script>
@@ -41,52 +37,12 @@
       }
     };
   </script>
-
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #E7E2DA;
-      color: #1F2937;
-      -webkit-tap-highlight-color: transparent;
-    }
-    @keyframes scanline {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(108px); }
-    }
-    .animate-scan { animation: scanline 2.2s ease-in-out infinite; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    /* IMPRESIÓN NATIVA PWA (SIN VENTANAS EMERGENTES BLOQUEADAS) */
-    @media print {
-      @page { margin: 8mm; }
-      body { background: #FFFFFF !important; }
-      body * { visibility: hidden !important; }
-      #printable-qr-card, #printable-qr-card * {
-        visibility: visible !important;
-      }
-      #printable-qr-card {
-        position: fixed !important;
-        left: 50% !important;
-        top: 24px !important;
-        transform: translateX(-50%) !important;
-        width: 280px !important;
-        max-width: 280px !important;
-        border: 4px solid #1B4332 !important;
-        border-radius: 18px !important;
-        background: #FFFFFF !important;
-        box-shadow: none !important;
-        z-index: 9999 !important;
-      }
-    }
-  </style>
 </head>
 <body class="min-h-screen flex justify-center items-start sm:py-4">
 
-  <!-- Contenedor Mobile-First -->
   <div id="app-shell" class="w-full max-w-md min-h-screen sm:min-h-[850px] sm:rounded-[34px] sm:shadow-2xl sm:border-[8px] sm:border-[#1E2421] bg-creamSand flex flex-col overflow-hidden relative">
 
-    <!-- ==================== HEADER CORPORATIVO ==================== -->
+    <!-- HEADER CORPORATIVO -->
     <header class="bg-forest text-white px-4 pt-4 pb-3 shadow-md z-20">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
@@ -106,7 +62,6 @@
           </div>
         </div>
 
-        <!-- Píldora de Estado de Conexión / Cola Offline -->
         <button id="network-pill" onclick="toggleNetworkMode()" title="Toca para probar modo Sin Señal o sincronizar"
           class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition active:scale-95 bg-emeraldAgro/90 border border-emerald-300/40 text-white shadow-sm shrink-0">
           <span id="network-dot" class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
@@ -115,52 +70,40 @@
         </button>
       </div>
 
-      <!-- Barra de Usuario Autenticado + Cerrar Sesión -->
       <div id="active-role-bar" class="hidden mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-xs">
         <div class="flex items-center gap-2 truncate">
           <span id="role-pill-badge" class="px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase tracking-wider bg-harvestGold text-white shrink-0">ROL</span>
           <span id="active-user-name" class="font-semibold text-white truncate">Usuario</span>
         </div>
         <div class="flex items-center gap-1.5 shrink-0 ml-2">
-          <button onclick="syncAllFromSupabase(true)" title="Actualizar datos desde Supabase" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 transition">
-            🔄
-          </button>
-          <button onclick="logoutUser()" class="px-2.5 py-1 rounded-lg bg-red-900/70 hover:bg-red-800 border border-red-400/40 text-amber-100 hover:text-white font-bold text-[11px] transition">
-            Salir
-          </button>
+          <button onclick="syncAllFromSupabase(true)" title="Actualizar datos desde Supabase" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 transition">🔄</button>
+          <button onclick="logoutUser()" class="px-2.5 py-1 rounded-lg bg-red-900/70 hover:bg-red-800 border border-red-400/40 text-amber-100 hover:text-white font-bold text-[11px] transition">Salir</button>
         </div>
       </div>
     </header>
 
-    <!-- ==================== NOTIFICACIONES / TOAST ==================== -->
+    <!-- NOTIFICACIONES / TOAST -->
     <div id="toast-container" class="px-4 pt-2 z-30 empty:hidden"></div>
 
-    <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 overflow-y-auto px-4 py-4 pb-24 space-y-4">
 
-      <!-- 1. PANTALLA DE INICIO DE SESIÓN -->
+      <!-- 1. LOGIN -->
       <section id="screen-login" class="space-y-4">
         <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-emeraldAgro bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-              Acceso por Rol y Rancho
-            </span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emeraldAgro bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">Acceso por Rol y Rancho</span>
             <span id="db-conn-indicator" class="text-[11px] font-bold text-emerald-700">● Supabase Conectado</span>
           </div>
           <h2 class="text-lg font-extrabold text-forest mt-2">Iniciar Sesión</h2>
-          <p class="text-xs text-stone-600 mt-1">
-            Ingresa tu usuario y PIN. El sistema habilitará únicamente las áreas autorizadas para tu perfil.
-          </p>
+          <p class="text-xs text-stone-600 mt-1">Ingresa tu usuario y PIN. El sistema habilitará únicamente las áreas autorizadas para tu perfil.</p>
 
-          <!-- Banner Instalación PWA -->
           <div id="pwa-install-banner" class="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center justify-between gap-2">
             <div class="text-[11px] text-forest leading-tight">
               <strong class="block font-extrabold">📲 Instalar App en este teléfono</strong>
               <span id="pwa-install-hint" class="text-stone-600">Menú del navegador → "Agregar a pantalla de inicio"</span>
             </div>
-            <button id="btn-install-pwa" type="button" onclick="triggerPWAInstall()" class="hidden shrink-0 px-3 py-1.5 rounded-lg bg-forest text-white text-xs font-extrabold shadow-sm">
-              Instalar
-            </button>
+            <button id="btn-install-pwa" type="button" onclick="triggerPWAInstall()" class="hidden shrink-0 px-3 py-1.5 rounded-lg bg-forest text-white text-xs font-extrabold shadow-sm">Instalar</button>
           </div>
 
           <form onsubmit="handleLoginSubmit(event)" class="mt-4 space-y-3">
@@ -169,22 +112,19 @@
               <input id="login-username" type="text" autocomplete="username" placeholder="Ej. admin01, diesel_eden, campo02, taller03"
                 class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-sm font-bold text-stone-900" required />
             </div>
-
             <div>
               <label for="login-pin" class="block text-xs font-bold text-stone-700 mb-1">PIN de Acceso</label>
               <input id="login-pin" type="password" inputmode="numeric" maxlength="10" placeholder="••••"
                 class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-base font-extrabold tracking-widest text-stone-900" required />
             </div>
-
-            <button id="btn-login-submit" type="submit"
-              class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
+            <button id="btn-login-submit" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
               INGRESAR AL SISTEMA →
             </button>
           </form>
         </div>
       </section>
 
-      <!-- 2. MÓDULO ESCÁNER QR (COMPARTIDO PARA DIÉSEL Y REPORTAR FALLA) -->
+      <!-- 2. ESCÁNER QR COMPARTIDO -->
       <section id="qr-scanner-module" class="hidden space-y-3">
         <div class="bg-[#1C231F] text-white rounded-2xl p-4 shadow-md border border-stone-700">
           <div class="flex items-center justify-between mb-2">
@@ -196,25 +136,18 @@
               📷 Abrir Cámara
             </button>
           </div>
-
-          <!-- Visor de cámara real html5-qrcode -->
           <div id="real-camera-box" class="hidden mb-3 rounded-xl overflow-hidden bg-black border border-amber-400/60">
             <div id="qr-reader" class="w-full"></div>
             <p class="text-[11px] text-center text-stone-300 py-1.5 bg-stone-900">Enfoca la etiqueta QR del tractor</p>
           </div>
-
-          <!-- Selector rápido de tractores registrados en Supabase -->
           <div id="simulated-qr-box" class="space-y-2">
-            <p class="text-[11px] text-stone-300">
-              O selecciona un tractor registrado en la base de datos:
-            </p>
+            <p class="text-[11px] text-stone-300">O selecciona un tractor registrado en la base de datos:</p>
             <div id="quick-tractors-list" class="flex flex-wrap gap-1.5">
               <span class="text-xs text-amber-200">Cargando tractores...</span>
             </div>
           </div>
         </div>
 
-        <!-- Tarjeta de Validación Visual del Tractor Seleccionado -->
         <div id="selected-tractor-card" class="hidden bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-2">
           <div class="flex items-center justify-between gap-2">
             <div>
@@ -231,27 +164,25 @@
             </div>
           </div>
 
-          <!-- Alerta Automática de Préstamo / Carga Cruzada entre Ranchos -->
           <div id="cross-ranch-alert" class="hidden bg-amber-100 border border-amber-400 rounded-xl p-2.5 text-xs text-amber-950 flex items-start gap-2">
             <span class="text-base leading-none">🚜</span>
             <div>
               <strong class="block font-extrabold text-barnTerra uppercase text-[10px]">Préstamo / Carga Cruzada entre Ranchos</strong>
-              <span id="cross-ranch-text" class="text-[11px] font-semibold">Unidad de Matanuzka cargando en El Edén.</span>
+              <span id="cross-ranch-text" class="text-[11px] font-semibold"></span>
             </div>
           </div>
         </div>
 
-        <!-- Aviso si aún no hay tractores registrados -->
         <div id="no-tractors-warning" class="hidden bg-amber-50 border-2 border-harvestGold rounded-2xl p-4 text-center space-y-2">
           <p class="text-sm font-extrabold text-forest">Aún no hay tractores dados de alta</p>
-          <p class="text-xs text-stone-600">Registra el primer tractor y genera su etiqueta QR para comenzar a capturar cargas o reportes.</p>
+          <p class="text-xs text-stone-600">Registra el primer tractor y genera su etiqueta QR para comenzar.</p>
           <button id="btn-go-register-qr" type="button" onclick="switchScreen('tractors-qr')" class="hidden px-4 py-2 rounded-xl bg-harvestGold text-white text-xs font-extrabold shadow-sm">
             + Dar de Alta Tractor y Generar QR
           </button>
         </div>
       </section>
 
-      <!-- 3. MÓDULO CARGAS DE DIÉSEL (DIESEL Y ADMIN) -->
+      <!-- 3. CARGAS DE DIÉSEL -->
       <section id="screen-diesel" class="hidden space-y-3.5">
         <div class="bg-white rounded-2xl p-4 border-2 border-harvestGold shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-stone-100 pb-2">
@@ -266,11 +197,8 @@
             </div>
           </div>
 
-          <!-- Litros Suministrados -->
           <div>
-            <label for="input-liters" class="block text-xs font-extrabold uppercase tracking-wider text-stone-600 mb-1.5">
-              Litros Suministrados *
-            </label>
+            <label for="input-liters" class="block text-xs font-extrabold uppercase tracking-wider text-stone-600 mb-1.5">Litros Suministrados *</label>
             <div class="relative">
               <input id="input-liters" type="number" step="0.1" min="0.5" max="2000" inputmode="decimal" placeholder="0.0"
                 class="w-full text-center text-3xl font-extrabold text-stone-900 bg-creamSand border-2 border-harvestGold/50 focus:border-harvestGold focus:outline-none rounded-2xl py-3 px-4" />
@@ -284,16 +212,12 @@
             </div>
           </div>
 
-          <!-- ACTIVIDAD DEL TRACTOR: FILTRO RÁPIDO POR ÁREA + BUSCADOR + SELECTOR -->
           <div class="bg-creamSand rounded-2xl p-3 border border-stone-200 space-y-2.5">
             <div class="flex items-center justify-between">
-              <label class="block text-xs font-extrabold uppercase tracking-wider text-forest">
-                Actividad del Tractor *
-              </label>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-forest">Actividad del Tractor *</label>
               <span id="activity-count-hint" class="text-[10px] font-bold text-stone-500">60 tareas</span>
             </div>
 
-            <!-- Chips de Área de 1 toque -->
             <div id="area-filter-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
               <button type="button" onclick="setAreaFilter('TODAS')" data-area="TODAS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-forest text-white">Todas</button>
               <button type="button" onclick="setAreaFilter('CAMPO')" data-area="CAMPO" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🌾 Campo</button>
@@ -304,38 +228,30 @@
               <button type="button" onclick="setAreaFilter('OTRAS')" data-area="OTRAS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">⚙️ Otras áreas</button>
             </div>
 
-            <!-- Buscador rápido por palabra clave o ID -->
-            <div class="relative">
-              <input id="input-activity-search" type="text" oninput="renderFilteredActivities()" placeholder="🔍 Buscar tarea (ej. alfalfa, corrales, 15...)"
-                class="w-full bg-white border border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2 px-3 text-xs font-semibold text-stone-800" />
-            </div>
+            <input id="input-activity-search" type="text" oninput="renderFilteredActivities()" placeholder="🔍 Buscar tarea (ej. alfalfa, corrales, 15...)"
+              class="w-full bg-white border border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2 px-3 text-xs font-semibold text-stone-800" />
 
-            <!-- Selector filtrado -->
             <select id="select-activity" onchange="toggleCustomActivity()"
-              class="w-full bg-white border-2 border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2.5 px-3 text-sm font-bold text-stone-900">
-            </select>
+              class="w-full bg-white border-2 border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2.5 px-3 text-sm font-bold text-stone-900"></select>
 
             <input id="input-custom-activity" type="text" placeholder="Escribe la actividad específica..."
               class="hidden w-full bg-white border border-harvestGold rounded-xl py-2 px-3 text-sm font-semibold text-stone-900" />
           </div>
 
-          <!-- Horómetro Opcional -->
           <div>
-            <label for="input-horometer" class="block text-xs font-bold text-stone-600 mb-1">
-              Horómetro Actual (Opcional)
-            </label>
+            <label for="input-horometer" class="block text-xs font-bold text-stone-600 mb-1">Horómetro Actual (Opcional)</label>
             <input id="input-horometer" type="number" step="0.1" inputmode="decimal" placeholder="Ej. 4225.5"
               class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-sm font-bold text-stone-800" />
           </div>
 
-          <button id="btn-save-diesel" type="button" onclick="submitFuelLoad()"
+          <button id="btn-save-diesel" type="button" onclick="openFuelConfirmModal()"
             class="w-full py-4 rounded-2xl bg-harvestGold hover:bg-amber-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
-            REGISTRAR CARGA DE DIÉSEL
+            REVISAR Y REGISTRAR CARGA →
           </button>
         </div>
       </section>
 
-      <!-- 4. MÓDULO ALTA DE TRACTORES Y GENERADOR DE QR (ID AUTOMÁTICO + IMPRESIÓN PWA) -->
+      <!-- 4. ALTA DE TRACTORES Y GENERADOR QR -->
       <section id="screen-tractors-qr" class="hidden space-y-4">
         <div class="bg-white rounded-2xl p-4 border-2 border-forest shadow-sm space-y-3.5">
           <div>
@@ -350,7 +266,6 @@
               <input id="new-trc-model" type="text" placeholder="Ej. John Deere 6110J" required
                 class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3 text-sm font-bold text-stone-900" />
             </div>
-
             <div>
               <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Base (Dueño de la unidad) *</label>
               <select id="new-trc-rancho" required
@@ -361,7 +276,6 @@
                 <option value="ARADOS">Arados</option>
               </select>
             </div>
-
             <div class="grid grid-cols-2 gap-2.5">
               <div>
                 <label class="block text-xs font-bold text-stone-700 mb-1">No. de Serie</label>
@@ -374,20 +288,16 @@
                   class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2 px-3 text-xs font-bold text-stone-900" />
               </div>
             </div>
-
-            <button id="btn-create-tractor" type="submit"
-              class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-sm shadow-md transition">
+            <button id="btn-create-tractor" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-sm shadow-md transition">
               GUARDAR TRACTOR Y GENERAR QR
             </button>
           </form>
         </div>
 
-        <!-- Tarjeta QR Generada Lista para Imprimir / Descargar PNG / Compartir -->
         <div id="generated-qr-wrapper" class="hidden bg-white rounded-2xl p-4 border-2 border-harvestGold shadow-md space-y-3 text-center">
           <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-barnTerra px-2.5 py-0.5 rounded-full">
             Etiqueta QR Lista para Pegar en Tractor
           </span>
-
           <div id="printable-qr-card" class="mx-auto max-w-[260px] bg-white border-4 border-forest rounded-2xl p-4 flex flex-col items-center space-y-2">
             <span class="text-[10px] font-extrabold uppercase tracking-widest text-emeraldAgro">AGROFLEET QR</span>
             <div id="qrcode-canvas-box" class="p-2 bg-white rounded-xl"></div>
@@ -397,21 +307,15 @@
               <span id="qr-card-rancho" class="inline-block mt-1 text-[10px] font-extrabold px-2 py-0.5 rounded bg-sandCard text-stone-700">Base: El Edén</span>
             </div>
           </div>
-
           <div class="grid grid-cols-2 gap-2 pt-1">
-            <button type="button" onclick="downloadQRLabelPNG()" class="py-2.5 px-3 rounded-xl bg-harvestGold hover:bg-amber-700 text-white font-extrabold text-xs shadow-sm">
-              ⬇ Descargar PNG
-            </button>
-            <button type="button" onclick="printQRInPWA()" class="py-2.5 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-sm">
-              🖨️ Imprimir Etiqueta
-            </button>
+            <button type="button" onclick="downloadQRLabelPNG()" class="py-2.5 px-3 rounded-xl bg-harvestGold hover:bg-amber-700 text-white font-extrabold text-xs shadow-sm">⬇ Descargar PNG</button>
+            <button type="button" onclick="printQRInPWA()" class="py-2.5 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-sm">🖨️ Imprimir Etiqueta</button>
           </div>
           <button id="btn-share-qr" type="button" onclick="shareQRLabelPWA()" class="w-full py-2 px-3 rounded-xl bg-sandCard hover:bg-stone-200 text-forest font-bold text-xs border border-stone-300">
             📤 Compartir Etiqueta (WhatsApp / Impresora Bluetooth)
           </button>
         </div>
 
-        <!-- Listado de Tractores Registrados -->
         <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-2.5">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-extrabold uppercase tracking-wider text-stone-700">Tractores Registrados en BD</h3>
@@ -421,7 +325,7 @@
         </div>
       </section>
 
-      <!-- 5. MÓDULO REPORTAR FALLA / PETICIÓN DE MANTENIMIENTO (SOLICITANTE_MNT Y ADMIN) -->
+      <!-- 5. REPORTAR FALLA -->
       <section id="screen-report-fault" class="hidden space-y-3.5">
         <div class="bg-white rounded-2xl p-4 border-2 border-barnTerra shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-stone-100 pb-2">
@@ -432,7 +336,6 @@
             <span class="text-[10px] font-extrabold px-2 py-1 rounded-lg bg-orange-100 text-barnTerra">PENDIENTE</span>
           </div>
 
-          <!-- Rancho donde se reporta -->
           <div>
             <label for="select-fault-rancho" class="block text-xs font-bold text-stone-700 mb-1">Rancho donde se encuentra la unidad</label>
             <select id="select-fault-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-800">
@@ -443,29 +346,20 @@
             </select>
           </div>
 
-          <!-- Prioridad -->
           <div>
             <label class="block text-xs font-bold text-stone-700 mb-1.5">Prioridad *</label>
             <div class="grid grid-cols-2 gap-2.5">
-              <button type="button" id="prio-normal" onclick="setPriority('NORMAL')"
-                class="py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition">
-                NORMAL
-              </button>
-              <button type="button" id="prio-urgente" onclick="setPriority('URGENTE')"
-                class="py-2.5 px-3 rounded-xl border-2 border-red-600 bg-red-50 text-red-700 font-extrabold text-xs transition">
-                ● URGENTE / PARO
-              </button>
+              <button type="button" id="prio-normal" onclick="setPriority('NORMAL')" class="py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition">NORMAL</button>
+              <button type="button" id="prio-urgente" onclick="setPriority('URGENTE')" class="py-2.5 px-3 rounded-xl border-2 border-red-600 bg-red-50 text-red-700 font-extrabold text-xs transition">● URGENTE / PARO</button>
             </div>
           </div>
 
-          <!-- Descripción -->
           <div>
             <label for="input-fault-desc" class="block text-xs font-bold text-stone-700 mb-1">Descripción de la Falla *</label>
             <textarea id="input-fault-desc" rows="3" placeholder="Ej. Fuga en manguera hidráulica o fallo de encendido..."
               class="w-full bg-creamSand border border-stone-300 focus:border-barnTerra focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
           </div>
 
-          <!-- Evidencia Inicial (Supabase Storage) -->
           <div>
             <label class="block text-xs font-bold text-stone-700 mb-1.5">Evidencia Fotográfica Inicial</label>
             <div id="role2-photo-grid" class="grid grid-cols-3 gap-2">
@@ -477,20 +371,18 @@
             </div>
           </div>
 
-          <button id="btn-submit-fault" type="button" onclick="submitMaintenanceRequest()"
-            class="w-full py-4 rounded-2xl bg-barnTerra hover:bg-red-900 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
+          <button id="btn-submit-fault" type="button" onclick="submitMaintenanceRequest()" class="w-full py-4 rounded-2xl bg-barnTerra hover:bg-red-900 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
             ENVIAR PETICIÓN AL TALLER
           </button>
         </div>
 
-        <!-- Mis Reportes Enviados -->
         <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-2">
           <h4 class="text-xs font-extrabold uppercase tracking-wider text-stone-700">Mis Peticiones Enviadas</h4>
           <div id="role2-my-tickets-list" class="space-y-2"></div>
         </div>
       </section>
 
-      <!-- 6. MÓDULO TALLER / REPARACIÓN REALIZADA (TECNICO_MNT Y ADMIN) -->
+      <!-- 6. TALLER / REPARACIÓN -->
       <section id="screen-workshop" class="hidden space-y-3.5">
         <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
           <div class="flex items-center justify-between">
@@ -504,7 +396,6 @@
 
         <div id="role3-tickets-list" class="space-y-2.5"></div>
 
-        <!-- Panel de Cierre de Reparación -->
         <div id="role3-close-panel" class="hidden bg-white rounded-2xl p-4 border-2 border-emeraldAgro shadow-md space-y-4">
           <div class="flex items-start justify-between gap-2 border-b border-stone-100 pb-2.5">
             <div>
@@ -540,12 +431,10 @@
           <div>
             <label class="block text-xs font-bold text-stone-700 mb-1.5">Estatus del Servicio</label>
             <div class="grid grid-cols-2 gap-2.5">
-              <button type="button" id="status-btn-finalizado" onclick="setResolutionStatus('FINALIZADO')"
-                class="py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center">
+              <button type="button" id="status-btn-finalizado" onclick="setResolutionStatus('FINALIZADO')" class="py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center">
                 ✔ FINALIZADO<br><span class="text-[10px] font-normal">Tractor operativo</span>
               </button>
-              <button type="button" id="status-btn-espera" onclick="setResolutionStatus('EN_ESPERA')"
-                class="py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center">
+              <button type="button" id="status-btn-espera" onclick="setResolutionStatus('EN_ESPERA')" class="py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center">
                 ⏳ EN ESPERA<br><span class="text-[10px] font-normal">Refacción / Taller ext.</span>
               </button>
             </div>
@@ -560,14 +449,13 @@
             </select>
           </div>
 
-          <button id="btn-save-repair" type="button" onclick="submitRepairClosure()"
-            class="w-full py-4 rounded-2xl bg-emeraldAgro hover:bg-forest active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
+          <button id="btn-save-repair" type="button" onclick="submitRepairClosure()" class="w-full py-4 rounded-2xl bg-emeraldAgro hover:bg-forest active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
             CONFIRMAR Y GUARDAR SERVICIO
           </button>
         </div>
       </section>
 
-      <!-- 7. BITÁCORA E HISTORIAL (FILTRADO POR ROL Y POR RANCHO) -->
+      <!-- 7. BITÁCORA E HISTORIAL -->
       <section id="screen-history" class="hidden space-y-4">
         <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
@@ -575,12 +463,9 @@
               <span id="history-area-tag" class="text-[11px] font-extrabold uppercase tracking-wider text-forest">Bitácora</span>
               <h2 id="history-area-title" class="text-base font-extrabold text-stone-900">Historial en Tiempo Real</h2>
             </div>
-            <button type="button" onclick="exportDataCSV()" class="px-3 py-1.5 rounded-xl bg-forest text-white text-xs font-bold hover:bg-emeraldAgro transition shadow-sm">
-              ⬇ CSV
-            </button>
+            <button type="button" onclick="exportDataCSV()" class="px-3 py-1.5 rounded-xl bg-forest text-white text-xs font-bold hover:bg-emeraldAgro transition shadow-sm">⬇ CSV</button>
           </div>
 
-          <!-- Filtros para ADMIN -->
           <div id="admin-history-filters" class="hidden space-y-2 pt-2 border-t border-stone-100">
             <div class="grid grid-cols-2 gap-2">
               <select id="filter-history-tab" onchange="renderHistoryScreen()" class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800">
@@ -605,1419 +490,135 @@
 
     </main>
 
-    <!-- ==================== BARRA INFERIOR DINÁMICA SEGÚN ROL ==================== -->
+    <!-- MODAL 1: CONFIRMACIÓN PREVIA AL GUARDAR DIÉSEL -->
+    <div id="modal-confirm-fuel" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-5 border-2 border-harvestGold shadow-2xl space-y-4">
+        <div class="flex items-center gap-2.5 border-b border-stone-100 pb-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 text-harvestGold flex items-center justify-center text-xl shrink-0">⛽</div>
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-harvestGold">Verifica antes de guardar</span>
+            <h3 class="text-base font-extrabold text-forest leading-tight">¿Los datos son correctos?</h3>
+          </div>
+        </div>
+
+        <div class="bg-creamSand rounded-2xl p-3.5 border border-stone-200 space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-stone-500 font-semibold">Tractor:</span>
+            <strong id="conf-fuel-tractor" class="text-forest font-extrabold">#TRC-001</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-stone-500 font-semibold">Rancho de carga:</span>
+            <strong id="conf-fuel-rancho" class="text-stone-800 font-bold">El Edén</strong>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t border-stone-200">
+            <span class="text-stone-500 font-semibold">Litros a registrar:</span>
+            <strong id="conf-fuel-liters" class="text-lg font-black text-harvestGold">0.0 L</strong>
+          </div>
+          <div class="pt-1 border-t border-stone-200">
+            <span class="block text-stone-500 font-semibold mb-0.5">Actividad:</span>
+            <strong id="conf-fuel-activity" class="text-forest font-bold block leading-snug">—</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-stone-500 font-semibold">Horómetro:</span>
+            <strong id="conf-fuel-horo" class="text-stone-700 font-bold">No registrado</strong>
+          </div>
+        </div>
+
+        <div id="conf-fuel-cross-warn" class="hidden bg-amber-100 border border-amber-400 rounded-xl p-2.5 text-[11px] font-bold text-barnTerra"></div>
+
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button type="button" onclick="closeFuelConfirmModal()" class="py-3 px-3 rounded-xl bg-sandCard hover:bg-stone-200 text-stone-800 font-extrabold text-xs border border-stone-300">✏️ Corregir</button>
+          <button id="btn-confirm-fuel-final" type="button" onclick="confirmAndSaveFuelLoad()" class="py-3 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-md">✔ Sí, Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: EDICIÓN EXCLUSIVA ADMIN -->
+    <div id="modal-admin-edit" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-5 border-2 border-forest shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emeraldAgro">Control Administrador</span>
+            <h3 id="admin-edit-title" class="text-base font-extrabold text-forest">Editar Registro</h3>
+          </div>
+          <button type="button" onclick="closeAdminEditModal()" class="text-stone-400 hover:text-stone-700 font-bold px-2 py-1">✕</button>
+        </div>
+
+        <div id="admin-edit-diesel-fields" class="hidden space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Tractor</label>
+            <select id="edit-fuel-tractor" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Rancho de Carga</label>
+            <select id="edit-fuel-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900">
+              <option value="EDEN">El Edén</option>
+              <option value="MATANUZKA">Matanuzka</option>
+              <option value="ESPERANZA">La Esperanza</option>
+              <option value="ARADOS">Arados</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Litros *</label>
+              <input id="edit-fuel-liters" type="number" step="0.1" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-sm font-extrabold text-stone-900" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Horómetro</label>
+              <input id="edit-fuel-horo" type="number" step="0.1" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-sm font-bold text-stone-900" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Actividad *</label>
+            <select id="edit-fuel-activity" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
+          </div>
+        </div>
+
+        <div id="admin-edit-mnt-fields" class="hidden space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Tractor</label>
+            <select id="edit-mnt-tractor" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Reporte</label>
+              <select id="edit-mnt-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
+                <option value="EDEN">El Edén</option>
+                <option value="MATANUZKA">Matanuzka</option>
+                <option value="ESPERANZA">La Esperanza</option>
+                <option value="ARADOS">Arados</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-stone-700 mb-1">Prioridad</label>
+              <select id="edit-mnt-prio" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
+                <option value="NORMAL">NORMAL</option>
+                <option value="URGENTE">URGENTE</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Descripción de Falla *</label>
+            <textarea id="edit-mnt-desc" rows="2" class="w-full bg-creamSand border border-stone-300 rounded-xl p-2.5 text-xs font-semibold text-stone-900"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Trabajo Realizado (Taller)</label>
+            <textarea id="edit-mnt-work" rows="2" class="w-full bg-creamSand border border-stone-300 rounded-xl p-2.5 text-xs font-semibold text-stone-900"></textarea>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 pt-2">
+          <button type="button" onclick="closeAdminEditModal()" class="py-3 px-3 rounded-xl bg-sandCard text-stone-700 font-bold text-xs border border-stone-300">Cancelar</button>
+          <button id="btn-admin-save-edit" type="button" onclick="saveAdminRecordEdit()" class="py-3 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-md">💾 Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BARRA INFERIOR DINÁMICA -->
     <nav id="bottom-nav" class="hidden bg-white border-t border-stone-200 px-1.5 py-2 flex items-center justify-around z-20 absolute bottom-0 inset-x-0"></nav>
   </div>
 
-  <!-- ==================== LÓGICA DE APLICACIÓN CONECTADA A SUPABASE ==================== -->
-  <script>
-    const SUPABASE_URL = 'https://swgqjmowhdkzaodkyvpj.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_1PeWHaPebHs1e_vqsqr6Fw_KvQjSl-e';
-
-    const RANCH_NAMES = {
-      EDEN: 'El Edén',
-      MATANUZKA: 'Matanuzka',
-      ESPERANZA: 'La Esperanza',
-      ARADOS: 'Arados'
-    };
-
-    // CATÁLOGO COMPLETO DE ACTIVIDADES (60 TAREAS NORMALIZADAS POR ÁREA)
-    const CATALOGO_ACTIVIDADES = [
-      // CAMPO (26)
-      { id: 1, tarea: 'Sembrar maíz', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 2, tarea: 'Sembrar avena y triticale', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 3, tarea: 'Sembrar alfalfa', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 4, tarea: 'Tirar cintilla', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 5, tarea: 'Subsuelear', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 6, tarea: 'Rastrear', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 7, tarea: 'Cultivar (escardar)', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 8, tarea: 'Sellar', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 9, tarea: 'Fumigar (Campo)', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 11, tarea: 'Tirar composta', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 12, tarea: 'Compostear', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 13, tarea: 'Formar chorizos de estiércol', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 14, tarea: 'Ensilar maíz', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 15, tarea: 'Cortar alfalfa', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 16, tarea: 'Juntar alfalfa', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 17, tarea: 'Triturar alfalfa (ensilar alfalfa)', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 18, tarea: 'Transportar alfalfa cortada y triturada (ensilada)', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 19, tarea: 'Subir y pisar alfalfa', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 20, tarea: 'Cortar y triturar maíz', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 21, tarea: 'Transportar maíz cortado y triturado (ensilado)', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 22, tarea: 'Subir y pisar maíz', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 37, tarea: 'Triturar maíz (ensilar)', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 42, tarea: 'Cargar composta', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 49, tarea: 'Nivelar tierra', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 51, tarea: 'Desbarar', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 53, tarea: 'Campo (General)', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 64, tarea: 'Riegos', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 65, tarea: 'Tirar estiércol', area: 'CAMPO', areaLabel: 'Campo' },
-      { id: 68, tarea: 'Tepetate', area: 'CAMPO', areaLabel: 'Campo' },
-
-      // ESTABLO (13)
-      { id: 25, tarea: 'Barrer banquetas', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 26, tarea: 'Rastrear corrales', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 27, tarea: 'Juntar estiércol de corrales', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 28, tarea: 'Cargar estiércol de corrales', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 29, tarea: 'Vaciar fosas', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 30, tarea: 'Trasladar estiércol', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 31, tarea: 'Pichonear', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 38, tarea: 'Tirar camas', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 39, tarea: 'Peinar camas', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 47, tarea: 'Barrer corrales', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 48, tarea: 'Fumigar corrales', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 56, tarea: 'Fumigar (Establo)', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 59, tarea: 'Podar pasto', area: 'ESTABLO', areaLabel: 'Establo' },
-      { id: 62, tarea: 'Rellenar agujeros', area: 'ESTABLO', areaLabel: 'Establo' },
-
-      // ALIMENTACIÓN (6)
-      { id: 23, tarea: 'Pasturear', area: 'ALIMENTACION', areaLabel: 'Alimentación' },
-      { id: 24, tarea: 'Arrimar comida a pesebres', area: 'ALIMENTACION', areaLabel: 'Alimentación' },
-      { id: 35, tarea: 'Cargar pasturas', area: 'ALIMENTACION', areaLabel: 'Alimentación' },
-      { id: 41, tarea: 'Moler pacas', area: 'ALIMENTACION', areaLabel: 'Alimentación' },
-      { id: 50, tarea: 'Recoger sobrantes', area: 'ALIMENTACION', areaLabel: 'Alimentación' },
-      { id: 60, tarea: 'Moler cebada', area: 'ALIMENTACION', areaLabel: 'Alimentación' },
-
-      // COMPOSTA (3)
-      { id: 46, tarea: 'Trasladar composta', area: 'COMPOSTA', areaLabel: 'Composta' },
-      { id: 57, tarea: 'Churros de composta', area: 'COMPOSTA', areaLabel: 'Composta' },
-      { id: 69, tarea: 'Cribado', area: 'COMPOSTA', areaLabel: 'Composta' },
-
-      // TRASLADOS (3)
-      { id: 44, tarea: 'Trasladar ganado', area: 'TRASLADOS', areaLabel: 'Traslados' },
-      { id: 45, tarea: 'Trasladar pastura', area: 'TRASLADOS', areaLabel: 'Traslados' },
-      { id: 55, tarea: 'Varios (Traslados)', area: 'TRASLADOS', areaLabel: 'Traslados' },
-
-      // OTRAS ÁREAS (5)
-      { id: 52, tarea: 'Quesería', area: 'OTRAS', areaLabel: 'Quesería' },
-      { id: 54, tarea: 'Crianza', area: 'OTRAS', areaLabel: 'Crianza' },
-      { id: 58, tarea: 'Ordeña', area: 'OTRAS', areaLabel: 'Ordeña' },
-      { id: 61, tarea: 'Construcción', area: 'OTRAS', areaLabel: 'Construcción' },
-      { id: 63, tarea: 'Varios (Mantenimiento)', area: 'OTRAS', areaLabel: 'Mantenimiento' }
-    ];
-
-    let selectedAreaFilter = 'TODAS';
-
-    const OFFLINE_QUEUE_KEY = 'agrofleet_offline_queue_v2';
-    const SESSION_KEY = 'agrofleet_user_session_v2';
-
-    let currentUser = null;
-    let isOnline = navigator.onLine;
-    let offlineQueue = loadOfflineQueue();
-
-    let dbTractors = [];
-    let dbFuelLogs = [];
-    let dbTickets = [];
-    let dbEvidences = [];
-
-    let selectedTractorId = null;
-    let selectedPriority = 'URGENTE';
-    let selectedResolution = 'FINALIZADO';
-    let activeTicketIdForRole3 = null;
-    let role2DraftFiles = [];
-    let role3DraftFiles = [];
-    let html5QrCodeInstance = null;
-    let cameraActive = false;
-
-    // ==================== REGISTRO SERVICE WORKER REAL ====================
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
-    }
-
-    let deferredInstallPrompt = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredInstallPrompt = e;
-      document.getElementById('btn-install-pwa')?.classList.remove('hidden');
-      document.getElementById('pwa-install-hint').textContent = 'Instala AgroFleet QR como app nativa en tu inicio';
-    });
-
-    async function triggerPWAInstall() {
-      if (!deferredInstallPrompt) return;
-      deferredInstallPrompt.prompt();
-      const { outcome } = await deferredInstallPrompt.userChoice;
-      if (outcome === 'accepted') {
-        document.getElementById('pwa-install-banner').classList.add('hidden');
-        showToast('✔ App instalada en tu pantalla de inicio.', 'success');
-      }
-      deferredInstallPrompt = null;
-    }
-
-    // ==================== HELPER REST API SUPABASE ====================
-    async function sbFetch(path, options = {}) {
-      const headers = {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
-      };
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...options, headers });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Supabase error (${res.status}): ${errText}`);
-      }
-      const text = await res.text();
-      return text ? JSON.parse(text) : null;
-    }
-
-    async function uploadImageToSupabaseStorage(fileObj, folderPrefix) {
-      try {
-        const cleanName = `${folderPrefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
-        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/evidencias/${cleanName}`, {
-          method: 'POST',
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': fileObj.type || 'image/jpeg',
-            'x-upsert': 'true'
-          },
-          body: fileObj
-        });
-        if (!res.ok) throw new Error('Storage upload failed');
-        return `${SUPABASE_URL}/storage/v1/object/public/evidencias/${cleanName}`;
-      } catch (e) {
-        return await compressImageToDataURL(fileObj);
-      }
-    }
-
-    function compressImageToDataURL(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const maxW = 640;
-            const scale = Math.min(1, maxW / img.width);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/jpeg', 0.65));
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    // ==================== AUTENTICACIÓN CON SUPABASE ====================
-    async function handleLoginSubmit(event) {
-      event.preventDefault();
-      const idInput = document.getElementById('login-username').value.trim().toLowerCase();
-      const pinInput = document.getElementById('login-pin').value.trim();
-      await authenticateUser(idInput, pinInput);
-    }
-
-    async function authenticateUser(idUsuario, pin) {
-      const btn = document.getElementById('btn-login-submit');
-      btn.disabled = true;
-      btn.textContent = 'VERIFICANDO EN SUPABASE...';
-
-      try {
-        const rows = await sbFetch(`usuarios_roles?id_usuario=eq.${encodeURIComponent(idUsuario)}&pin=eq.${encodeURIComponent(pin)}&activo=eq.true&select=*`);
-        if (!rows || rows.length === 0) {
-          showToast('Usuario o PIN incorrecto en la base de datos.', 'error');
-          document.getElementById('login-pin').value = '';
-          return;
-        }
-        const user = rows[0];
-        await startUserSession(user);
-      } catch (err) {
-        showToast('Error de conexión con Supabase. Verifica tu red.', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'INGRESAR AL SISTEMA →';
-      }
-    }
-
-    async function startUserSession(user) {
-      currentUser = user;
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
-
-      const bar = document.getElementById('active-role-bar');
-      const badge = document.getElementById('role-pill-badge');
-      const userName = document.getElementById('active-user-name');
-      const subtitle = document.getElementById('header-rancho-subtitle');
-
-      bar.classList.remove('hidden');
-      const ranchName = user.id_rancho ? (RANCH_NAMES[user.id_rancho] || user.id_rancho) : 'Todos los Ranchos';
-      subtitle.textContent = `Rancho Activo: ${ranchName}`;
-      userName.textContent = user.nombre;
-
-      if (user.rol === 'ADMIN') {
-        badge.textContent = 'ADMIN · TOTAL';
-        badge.className = 'px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase bg-emeraldAgro text-amber-200 border border-amber-300/40 shrink-0';
-      } else if (user.rol === 'DIESEL') {
-        badge.textContent = `DIÉSEL · ${ranchName.toUpperCase()}`;
-        badge.className = 'px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase bg-harvestGold text-white shrink-0';
-      } else if (user.rol === 'SOLICITANTE_MNT') {
-        badge.textContent = 'SOLICITANTE';
-        badge.className = 'px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase bg-barnTerra text-white shrink-0';
-      } else if (user.rol === 'TECNICO_MNT') {
-        badge.textContent = 'TALLER';
-        badge.className = 'px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase bg-emeraldAgro text-white shrink-0';
-      }
-
-      buildRoleNavigation(user.rol);
-      await syncAllFromSupabase(false);
-
-      if (user.rol === 'ADMIN' || user.rol === 'DIESEL') {
-        switchScreen('diesel');
-      } else if (user.rol === 'SOLICITANTE_MNT') {
-        switchScreen('report-fault');
-      } else if (user.rol === 'TECNICO_MNT') {
-        switchScreen('workshop');
-      }
-
-      showToast(`Bienvenido, ${user.nombre} (${ranchName}).`, 'success');
-    }
-
-    function buildRoleNavigation(rol) {
-      const nav = document.getElementById('bottom-nav');
-      nav.classList.remove('hidden');
-
-      let items = [];
-      if (rol === 'ADMIN') {
-        items = [
-          { id: 'diesel', label: 'Diésel', icon: '⛽' },
-          { id: 'tractors-qr', label: 'Alta/QR', icon: '🏁' },
-          { id: 'report-fault', label: 'Falla', icon: '⚠️' },
-          { id: 'workshop', label: 'Taller', icon: '🔧' },
-          { id: 'history', label: 'Bitácora', icon: '📊' }
-        ];
-      } else if (rol === 'DIESEL') {
-        items = [
-          { id: 'diesel', label: 'Cargar Diésel', icon: '⛽' },
-          { id: 'tractors-qr', label: 'Alta Tractor/QR', icon: '🏁' },
-          { id: 'history', label: 'Bitácora Rancho', icon: '📋' }
-        ];
-      } else if (rol === 'SOLICITANTE_MNT') {
-        items = [
-          { id: 'report-fault', label: 'Reportar Falla', icon: '⚠️' },
-          { id: 'history', label: 'Mis Reportes', icon: '📋' }
-        ];
-      } else if (rol === 'TECNICO_MNT') {
-        items = [
-          { id: 'workshop', label: 'Bandeja Taller', icon: '🔧' },
-          { id: 'history', label: 'Historial Taller', icon: '📋' }
-        ];
-      }
-
-      nav.innerHTML = items.map(it => `
-        <button type="button" onclick="switchScreen('${it.id}')" id="nav-${it.id}"
-          class="nav-item-btn flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl text-stone-500 font-semibold text-[10px] transition">
-          <span class="text-base leading-none mb-0.5">${it.icon}</span>
-          <span class="truncate max-w-full">${it.label}</span>
-        </button>
-      `).join('');
-    }
-
-    function logoutUser() {
-      currentUser = null;
-      sessionStorage.removeItem(SESSION_KEY);
-      stopCameraIfRunning();
-      document.getElementById('login-username').value = '';
-      document.getElementById('login-pin').value = '';
-      document.getElementById('active-role-bar').classList.add('hidden');
-      document.getElementById('bottom-nav').classList.add('hidden');
-      document.getElementById('header-rancho-subtitle').textContent = 'El Edén · Matanuzka · La Esperanza · Arados';
-      switchScreen('login');
-      showToast('Sesión cerrada.', 'info');
-    }
-
-    function switchScreen(screenName) {
-      stopCameraIfRunning();
-
-      if (screenName !== 'login' && !currentUser) {
-        screenName = 'login';
-      } else if (currentUser) {
-        const allowedByRole = {
-          ADMIN: ['diesel', 'tractors-qr', 'report-fault', 'workshop', 'history'],
-          DIESEL: ['diesel', 'tractors-qr', 'history'],
-          SOLICITANTE_MNT: ['report-fault', 'history'],
-          TECNICO_MNT: ['workshop', 'history']
-        };
-        if (!allowedByRole[currentUser.rol].includes(screenName)) {
-          showToast('Acceso denegado para tu rol.', 'error');
-          return;
-        }
-      }
-
-      ['screen-login', 'screen-diesel', 'screen-tractors-qr', 'screen-report-fault', 'screen-workshop', 'screen-history']
-        .forEach(id => document.getElementById(id).classList.add('hidden'));
-
-      document.getElementById('qr-scanner-module').classList.add('hidden');
-
-      document.querySelectorAll('.nav-item-btn').forEach(btn => {
-        btn.classList.remove('text-forest', 'font-extrabold', 'bg-emerald-50');
-        btn.classList.add('text-stone-500', 'font-semibold');
-      });
-
-      const activeNav = document.getElementById(`nav-${screenName}`);
-      if (activeNav) {
-        activeNav.classList.remove('text-stone-500', 'font-semibold');
-        activeNav.classList.add('text-forest', 'font-extrabold', 'bg-emerald-50');
-      }
-
-      if (screenName === 'login') {
-        document.getElementById('screen-login').classList.remove('hidden');
-      } else if (screenName === 'diesel') {
-        document.getElementById('qr-scanner-module').classList.remove('hidden');
-        document.getElementById('screen-diesel').classList.remove('hidden');
-        document.getElementById('admin-ranch-selector-box').classList.toggle('hidden', currentUser.rol !== 'ADMIN');
-        renderQuickTractors();
-        renderFilteredActivities();
-        updateCrossRanchBanner();
-      } else if (screenName === 'tractors-qr') {
-        document.getElementById('screen-tractors-qr').classList.remove('hidden');
-        if (currentUser.id_rancho) {
-          document.getElementById('new-trc-rancho').value = currentUser.id_rancho;
-        }
-        renderTractorsCatalog();
-      } else if (screenName === 'report-fault') {
-        document.getElementById('qr-scanner-module').classList.remove('hidden');
-        document.getElementById('screen-report-fault').classList.remove('hidden');
-        if (currentUser.id_rancho) {
-          document.getElementById('select-fault-rancho').value = currentUser.id_rancho;
-        }
-        renderQuickTractors();
-        renderDraftPhotos('role2');
-        renderRole2MyTickets();
-      } else if (screenName === 'workshop') {
-        document.getElementById('screen-workshop').classList.remove('hidden');
-        renderRole3TicketList();
-      } else if (screenName === 'history') {
-        document.getElementById('screen-history').classList.remove('hidden');
-        document.getElementById('admin-history-filters').classList.toggle('hidden', currentUser.rol !== 'ADMIN');
-        renderHistoryScreen();
-      }
-    }
-
-    // ==================== SINCRONIZACIÓN CON SUPABASE ====================
-    async function syncAllFromSupabase(notify = false) {
-      if (!isOnline) return;
-      try {
-        const [tractors, fuels, tickets, evidences] = await Promise.all([
-          sbFetch('tractores?order=fecha_alta.desc'),
-          sbFetch('cargas_diesel?order=fecha_hora.desc&limit=150'),
-          sbFetch('servicios_mantenimiento?order=fecha_solicitud.desc&limit=150'),
-          sbFetch('evidencias_servicio?order=fecha_subida.desc&limit=300')
-        ]);
-
-        dbTractors = tractors || [];
-        dbFuelLogs = fuels || [];
-        dbTickets = tickets || [];
-        dbEvidences = evidences || [];
-
-        if (!selectedTractorId && dbTractors.length > 0) {
-          selectedTractorId = dbTractors[0].id_tractor;
-        }
-
-        renderQuickTractors();
-        renderTractorsCatalog();
-        if (currentUser) {
-          renderRole2MyTickets();
-          renderRole3TicketList();
-        }
-        if (notify) showToast('✔ Datos actualizados desde Supabase.', 'success');
-      } catch (e) {
-        console.error(e);
-        if (notify) showToast('No se pudo actualizar desde Supabase.', 'error');
-      }
-    }
-
-    // ==================== ESCÁNER QR Y SELECCIÓN DE TRACTOR ====================
-    function renderQuickTractors() {
-      const container = document.getElementById('quick-tractors-list');
-      const warnBox = document.getElementById('no-tractors-warning');
-      const card = document.getElementById('selected-tractor-card');
-      const btnGoQR = document.getElementById('btn-go-register-qr');
-
-      if (dbTractors.length === 0) {
-        container.innerHTML = `<span class="text-xs text-stone-400">Sin tractores registrados aún.</span>`;
-        warnBox.classList.remove('hidden');
-        card.classList.add('hidden');
-        if (currentUser && (currentUser.rol === 'ADMIN' || currentUser.rol === 'DIESEL')) {
-          btnGoQR.classList.remove('hidden');
-        } else {
-          btnGoQR.classList.add('hidden');
-        }
-        return;
-      }
-
-      warnBox.classList.add('hidden');
-      if (!selectedTractorId || !dbTractors.some(t => t.id_tractor === selectedTractorId)) {
-        selectedTractorId = dbTractors[0].id_tractor;
-      }
-
-      container.innerHTML = dbTractors.map(t => {
-        const active = t.id_tractor === selectedTractorId;
-        return `
-          <button type="button" onclick="selectTractor('${t.id_tractor}')"
-            class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${active ? 'bg-emeraldAgro text-white border border-emerald-300' : 'bg-white/10 hover:bg-white/20 text-stone-100'}">
-            #${t.id_tractor}
-          </button>
-        `;
-      }).join('');
-
-      selectTractor(selectedTractorId, false);
-    }
-
-    function selectTractor(tractorId, reRenderButtons = true) {
-      const tr = dbTractors.find(t => t.id_tractor.toUpperCase() === tractorId.toUpperCase());
-      if (!tr) {
-        showToast(`El QR "${tractorId}" no existe en el catálogo de tractores.`, 'error');
-        return;
-      }
-      selectedTractorId = tr.id_tractor;
-      if (reRenderButtons) renderQuickTractors();
-
-      const card = document.getElementById('selected-tractor-card');
-      card.classList.remove('hidden');
-
-      document.getElementById('ui-tractor-id').textContent = `#${tr.id_tractor}`;
-      document.getElementById('ui-tractor-model').textContent = tr.modelo;
-      document.getElementById('ui-tractor-meta').textContent = `Serie: ${tr.serie || 'S/N'} · Tanque: ${tr.capacidad_tanque || '--'} L`;
-      document.getElementById('ui-tractor-owner-rancho').textContent = RANCH_NAMES[tr.id_rancho_base] || tr.id_rancho_base;
-
-      const statusEl = document.getElementById('ui-tractor-status');
-      statusEl.textContent = tr.estatus_operativo;
-      statusEl.className = tr.estatus_operativo === 'ACTIVO'
-        ? 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800'
-        : 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-barnTerra';
-
-      updateCrossRanchBanner();
-    }
-
-    function updateCrossRanchBanner() {
-      const alertBox = document.getElementById('cross-ranch-alert');
-      const alertText = document.getElementById('cross-ranch-text');
-      if (!currentUser || !selectedTractorId) {
-        alertBox.classList.add('hidden');
-        return;
-      }
-      const tr = dbTractors.find(t => t.id_tractor === selectedTractorId);
-      if (!tr) return;
-
-      const activeChargeRanch = currentUser.rol === 'ADMIN'
-        ? document.getElementById('select-admin-charge-ranch').value
-        : currentUser.id_rancho;
-
-      if (activeChargeRanch && tr.id_rancho_base !== activeChargeRanch) {
-        alertBox.classList.remove('hidden');
-        alertText.textContent = `Unidad perteneciente a ${RANCH_NAMES[tr.id_rancho_base]} cargando diésel en bomba de ${RANCH_NAMES[activeChargeRanch]}.`;
-      } else {
-        alertBox.classList.add('hidden');
-      }
-    }
-
-    async function toggleRealCamera() {
-      const realBox = document.getElementById('real-camera-box');
-      const btn = document.getElementById('btn-toggle-camera');
-
-      if (cameraActive) {
-        await stopCameraIfRunning();
-        return;
-      }
-
-      try {
-        realBox.classList.remove('hidden');
-        btn.textContent = '✕ Cerrar Cámara';
-        html5QrCodeInstance = new Html5Qrcode('qr-reader');
-        cameraActive = true;
-        await html5QrCodeInstance.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 200, height: 200 } },
-          (decodedText) => {
-            const code = decodedText.trim().toUpperCase();
-            selectTractor(code);
-            showToast(`✔ QR escaneado: #${code}`, 'success');
-            stopCameraIfRunning();
-          }
-        );
-      } catch (e) {
-        cameraActive = false;
-        realBox.classList.add('hidden');
-        btn.textContent = '📷 Abrir Cámara';
-        showToast('No se pudo abrir la cámara. Verifica permisos HTTPS o usa la lista de tractores.', 'info');
-      }
-    }
-
-    async function stopCameraIfRunning() {
-      if (html5QrCodeInstance && cameraActive) {
-        try {
-          await html5QrCodeInstance.stop();
-          html5QrCodeInstance.clear();
-        } catch (e) {}
-      }
-      cameraActive = false;
-      document.getElementById('real-camera-box')?.classList.add('hidden');
-      const btn = document.getElementById('btn-toggle-camera');
-      if (btn) btn.textContent = '📷 Abrir Cámara';
-    }
-
-    // ==================== ALTA DE TRACTOR (ID AUTOMÁTICO) E IMPRESIÓN NATIVA PWA ====================
-    async function handleCreateTractor(event) {
-      event.preventDefault();
-      if (!currentUser) return;
-
-      const idRanchoBase = document.getElementById('new-trc-rancho').value;
-      const modelo = document.getElementById('new-trc-model').value.trim();
-      const serie = document.getElementById('new-trc-serial').value.trim().toUpperCase();
-      const cap = parseFloat(document.getElementById('new-trc-tank').value) || null;
-
-      if (!modelo) return;
-
-      const btn = document.getElementById('btn-create-tractor');
-      btn.disabled = true;
-      btn.textContent = 'GUARDANDO Y GENERANDO FOLIO...';
-
-      const payload = {
-        modelo: modelo,
-        serie: serie || null,
-        capacidad_tanque: cap,
-        id_rancho_base: idRanchoBase,
-        estatus_operativo: 'ACTIVO',
-        creado_por: currentUser.id_usuario
-      };
-
-      try {
-        let savedTractor = null;
-        if (isOnline) {
-          const inserted = await sbFetch('tractores', {
-            method: 'POST',
-            headers: { Prefer: 'return=representation' },
-            body: JSON.stringify(payload)
-          });
-          savedTractor = inserted && inserted[0] ? inserted[0] : payload;
-          await syncAllFromSupabase(false);
-        } else {
-          const tempId = `TRC-TMP-${Date.now().toString().slice(-3)}`;
-          savedTractor = { ...payload, id_tractor: tempId };
-          enqueueOfflineAction({ table: 'tractores', payload });
-          dbTractors.unshift(savedTractor);
-        }
-
-        selectedTractorId = savedTractor.id_tractor;
-        renderQRVisualCard(savedTractor);
-        renderTractorsCatalog();
-
-        document.getElementById('new-trc-model').value = '';
-        document.getElementById('new-trc-serial').value = '';
-        document.getElementById('new-trc-tank').value = '';
-
-        showToast(`✔ Tractor #${savedTractor.id_tractor} guardado y etiqueta QR generada.`, 'success');
-      } catch (err) {
-        showToast(`Error al guardar tractor: ${err.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'GUARDAR TRACTOR Y GENERAR QR';
-      }
-    }
-
-    function renderQRVisualCard(tractor) {
-      const wrapper = document.getElementById('generated-qr-wrapper');
-      const box = document.getElementById('qrcode-canvas-box');
-      wrapper.classList.remove('hidden');
-      box.innerHTML = '';
-
-      new QRCode(box, {
-        text: tractor.id_tractor,
-        width: 170,
-        height: 170,
-        colorDark: '#1B4332',
-        colorLight: '#FFFFFF',
-        correctLevel: QRCode.CorrectLevel.H
-      });
-
-      document.getElementById('qr-card-id').textContent = `#${tractor.id_tractor}`;
-      document.getElementById('qr-card-model').textContent = tractor.modelo;
-      document.getElementById('qr-card-rancho').textContent = `Rancho Base: ${RANCH_NAMES[tractor.id_rancho_base] || tractor.id_rancho_base}`;
-      wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    function buildQRLabelCanvas() {
-      const qrCanvas = document.querySelector('#qrcode-canvas-box canvas');
-      if (!qrCanvas) return null;
-
-      const idText = document.getElementById('qr-card-id').textContent;
-      const modelText = document.getElementById('qr-card-model').textContent;
-      const ranchoText = document.getElementById('qr-card-rancho').textContent;
-
-      const out = document.createElement('canvas');
-      out.width = 420;
-      out.height = 540;
-      const ctx = out.getContext('2d');
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, out.width, out.height);
-
-      ctx.strokeStyle = '#1B4332';
-      ctx.lineWidth = 12;
-      ctx.strokeRect(12, 12, out.width - 24, out.height - 24);
-
-      ctx.fillStyle = '#2D6A4F';
-      ctx.font = 'bold 18px Inter, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('AGROFLEET QR · MAQUINARIA', out.width / 2, 52);
-
-      ctx.drawImage(qrCanvas, (out.width - 260) / 2, 74, 260, 260);
-
-      ctx.fillStyle = '#1B4332';
-      ctx.font = '900 42px Inter, sans-serif';
-      ctx.fillText(idText, out.width / 2, 392);
-
-      ctx.fillStyle = '#1F2937';
-      ctx.font = 'bold 22px Inter, sans-serif';
-      ctx.fillText(modelText, out.width / 2, 432);
-
-      ctx.fillStyle = '#C87D16';
-      ctx.font = 'bold 19px Inter, sans-serif';
-      ctx.fillText(ranchoText, out.width / 2, 472);
-
-      return { canvas: out, idText };
-    }
-
-    function downloadQRLabelPNG() {
-      const built = buildQRLabelCanvas();
-      if (!built) return;
-      const link = document.createElement('a');
-      link.download = `Etiqueta_QR_${built.idText.replace('#', '')}.png`;
-      link.href = built.canvas.toDataURL('image/png');
-      link.click();
-      showToast('Etiqueta QR descargada en PNG.', 'success');
-    }
-
-    function printQRInPWA() {
-      setTimeout(() => {
-        window.print();
-      }, 150);
-    }
-
-    async function shareQRLabelPWA() {
-      const built = buildQRLabelCanvas();
-      if (!built) return;
-
-      built.canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const fileName = `Etiqueta_QR_${built.idText.replace('#', '')}.png`;
-        const file = new File([blob], fileName, { type: 'image/png' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: `Etiqueta ${built.idText}`,
-              text: `Código QR AgroFleet ${built.idText}`,
-              files: [file]
-            });
-          } catch (e) {}
-        } else {
-          downloadQRLabelPNG();
-          showToast('Tu dispositivo no soporta compartir directo; se descargó el PNG.', 'info');
-        }
-      }, 'image/png');
-    }
-
-    function printTractorFromCatalog(tractor) {
-      renderQRVisualCard(tractor);
-      setTimeout(() => printQRInPWA(), 250);
-    }
-
-    function renderTractorsCatalog() {
-      const list = document.getElementById('tractors-catalog-list');
-      const countEl = document.getElementById('tractors-total-count');
-      if (!list) return;
-
-      countEl.textContent = `${dbTractors.length} unidad${dbTractors.length === 1 ? '' : 'es'}`;
-      if (dbTractors.length === 0) {
-        list.innerHTML = `<p class="text-xs text-stone-500 text-center py-3">Registra arriba tu primer tractor para generar su QR.</p>`;
-        return;
-      }
-
-      list.innerHTML = dbTractors.map(t => `
-        <div class="bg-creamSand rounded-xl p-2.5 border border-stone-200 flex items-center justify-between gap-2 text-xs">
-          <div>
-            <div class="flex items-center gap-1.5">
-              <strong class="text-forest font-extrabold">#${t.id_tractor}</strong>
-              <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900">${RANCH_NAMES[t.id_rancho_base] || t.id_rancho_base}</span>
-            </div>
-            <span class="block text-stone-700 font-semibold mt-0.5">${t.modelo} ${t.serie ? '· ' + t.serie : ''}</span>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button type="button" onclick='renderQRVisualCard(${JSON.stringify(t)})'
-              class="px-2.5 py-1.5 rounded-lg bg-harvestGold text-white font-bold text-[11px]">
-              Ver QR
-            </button>
-            <button type="button" onclick='printTractorFromCatalog(${JSON.stringify(t)})'
-              class="px-2.5 py-1.5 rounded-lg bg-forest text-white font-bold text-[11px]">
-              🖨️
-            </button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // ==================== SELECTOR PRÁCTICO DE ACTIVIDADES (ÁREA + BÚSQUEDA) ====================
-    function setAreaFilter(areaCode) {
-      selectedAreaFilter = areaCode;
-      document.querySelectorAll('.area-chip').forEach(btn => {
-        const active = btn.dataset.area === areaCode;
-        btn.className = active
-          ? 'area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-forest text-white'
-          : 'area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300';
-      });
-      renderFilteredActivities();
-    }
-
-    function normalizeText(str) {
-      return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    }
-
-    function renderFilteredActivities() {
-      const sel = document.getElementById('select-activity');
-      const searchInput = document.getElementById('input-activity-search');
-      const hint = document.getElementById('activity-count-hint');
-      if (!sel) return;
-
-      const query = normalizeText(searchInput ? searchInput.value.trim() : '');
-      const prevVal = sel.value;
-
-      const filtered = CATALOGO_ACTIVIDADES.filter(item => {
-        const matchArea = selectedAreaFilter === 'TODAS' || item.area === selectedAreaFilter;
-        const fullText = normalizeText(`${item.id} ${item.tarea} ${item.areaLabel}`);
-        const matchQuery = !query || fullText.includes(query);
-        return matchArea && matchQuery;
-      });
-
-      if (hint) {
-        hint.textContent = `${filtered.length} opción${filtered.length === 1 ? '' : 'es'}`;
-      }
-
-      let html = '';
-      if (filtered.length === 0) {
-        html = `<option value="">-- Sin coincidencias (usa Otra actividad) --</option>`;
-      } else {
-        if (filtered.length > 1) {
-          html += `<option value="">-- Selecciona tarea (${filtered.length}) --</option>`;
-        }
-        html += filtered.map(item => {
-          const val = `[${item.id}] ${item.tarea} (${item.areaLabel})`;
-          const label = selectedAreaFilter === 'TODAS'
-            ? `${item.tarea} · [${item.areaLabel}]`
-            : `${item.tarea}`;
-          return `<option value="${val}">${label}</option>`;
-        }).join('');
-      }
-
-      html += `<option value="OTRO">✏️ Otra actividad (especificar manual)</option>`;
-      sel.innerHTML = html;
-
-      // Si solo hay 1 coincidencia por búsqueda, seleccionarla automáticamente para ahorrar 1 clic
-      if (query && filtered.length === 1) {
-        sel.selectedIndex = 0;
-      } else if (prevVal && Array.from(sel.options).some(o => o.value === prevVal)) {
-        sel.value = prevVal;
-      }
-      toggleCustomActivity();
-    }
-
-    function setQuickLiters(val) {
-      document.getElementById('input-liters').value = val;
-    }
-
-    function toggleCustomActivity() {
-      const sel = document.getElementById('select-activity').value;
-      const customInput = document.getElementById('input-custom-activity');
-      customInput.classList.toggle('hidden', sel !== 'OTRO');
-    }
-
-    async function submitFuelLoad() {
-      if (!selectedTractorId) {
-        showToast('Primero selecciona o escanea un tractor válido.', 'error');
-        return;
-      }
-
-      const liters = parseFloat(document.getElementById('input-liters').value);
-      if (isNaN(liters) || liters <= 0) {
-        showToast('Ingresa los litros suministrados.', 'error');
-        document.getElementById('input-liters').focus();
-        return;
-      }
-
-      const actSelect = document.getElementById('select-activity').value;
-      const customAct = document.getElementById('input-custom-activity').value.trim();
-      const actividadFinal = actSelect === 'OTRO' ? customAct : actSelect;
-
-      if (!actividadFinal) {
-        showToast('Selecciona la actividad que está realizando el tractor.', 'error');
-        document.getElementById('select-activity').focus();
-        return;
-      }
-
-      const horoVal = parseFloat(document.getElementById('input-horometer').value);
-      const ranchoCarga = currentUser.rol === 'ADMIN'
-        ? document.getElementById('select-admin-charge-ranch').value
-        : currentUser.id_rancho;
-
-      const payload = {
-        id_tractor: selectedTractorId,
-        id_rancho_carga: ranchoCarga,
-        litros: liters,
-        horometro: isNaN(horoVal) ? null : horoVal,
-        actividad: actividadFinal,
-        id_usuario_diesel: currentUser.id_usuario
-      };
-
-      const btn = document.getElementById('btn-save-diesel');
-      btn.disabled = true;
-      btn.textContent = 'GUARDANDO...';
-
-      try {
-        if (isOnline) {
-          await sbFetch('cargas_diesel', { method: 'POST', body: JSON.stringify(payload) });
-          await syncAllFromSupabase(false);
-          showToast(`✔ Carga de ${liters} L en #${selectedTractorId} (${RANCH_NAMES[ranchoCarga]}) guardada.`, 'success');
-        } else {
-          enqueueOfflineAction({ table: 'cargas_diesel', payload });
-          dbFuelLogs.unshift({ ...payload, id_carga: 'OFFLINE', fecha_hora: new Date().toISOString() });
-          showToast('⏳ Sin señal: carga guardada en cola local para sincronizar.', 'info');
-        }
-
-        document.getElementById('input-liters').value = '';
-        document.getElementById('input-horometer').value = '';
-        document.getElementById('input-activity-search').value = '';
-        setAreaFilter('TODAS');
-        document.getElementById('input-custom-activity').value = '';
-        document.getElementById('input-custom-activity').classList.add('hidden');
-      } catch (err) {
-        showToast(`Error al guardar carga: ${err.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'REGISTRAR CARGA DE DIÉSEL';
-      }
-    }
-
-    // ==================== REPORTAR FALLA (SOLICITANTE_MNT) ====================
-    function setPriority(prio) {
-      selectedPriority = prio;
-      const btnN = document.getElementById('prio-normal');
-      const btnU = document.getElementById('prio-urgente');
-      if (prio === 'NORMAL') {
-        btnN.className = 'py-2.5 px-3 rounded-xl border-2 border-forest bg-emerald-50 text-forest font-extrabold text-xs transition';
-        btnU.className = 'py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition';
-      } else {
-        btnN.className = 'py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition';
-        btnU.className = 'py-2.5 px-3 rounded-xl border-2 border-red-600 bg-red-50 text-red-700 font-extrabold text-xs transition';
-      }
-    }
-
-    function handlePhotoUpload(event, targetRole) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const previewUrl = URL.createObjectURL(file);
-      if (targetRole === 'role2') {
-        role2DraftFiles.push({ previewUrl, fileObj: file });
-        renderDraftPhotos('role2');
-      } else {
-        role3DraftFiles.push({ previewUrl, fileObj: file });
-        renderDraftPhotos('role3');
-      }
-      event.target.value = '';
-    }
-
-    function renderDraftPhotos(targetRole) {
-      const isR2 = targetRole === 'role2';
-      const grid = document.getElementById(isR2 ? 'role2-photo-grid' : 'role3-photo-grid');
-      const list = isR2 ? role2DraftFiles : role3DraftFiles;
-      const uploadLabel = grid.firstElementChild;
-      grid.innerHTML = '';
-      grid.appendChild(uploadLabel);
-
-      list.forEach((item, idx) => {
-        const div = document.createElement('div');
-        div.className = 'aspect-square rounded-xl overflow-hidden relative border border-stone-300 bg-stone-100';
-        div.innerHTML = `
-          <img src="${item.previewUrl}" class="w-full h-full object-cover" />
-          <button type="button" onclick="removeDraftPhoto('${targetRole}', ${idx})"
-            class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/75 text-white text-[10px] font-bold">✕</button>
-        `;
-        grid.appendChild(div);
-      });
-    }
-
-    function removeDraftPhoto(targetRole, idx) {
-      if (targetRole === 'role2') {
-        role2DraftFiles.splice(idx, 1);
-        renderDraftPhotos('role2');
-      } else {
-        role3DraftFiles.splice(idx, 1);
-        renderDraftPhotos('role3');
-      }
-    }
-
-    async function submitMaintenanceRequest() {
-      if (!selectedTractorId) {
-        showToast('Selecciona o escanea un tractor primero.', 'error');
-        return;
-      }
-      const desc = document.getElementById('input-fault-desc').value.trim();
-      if (!desc) {
-        showToast('Escribe la descripción de la falla.', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('btn-submit-fault');
-      btn.disabled = true;
-      btn.textContent = 'ENVIANDO REPORTE Y FOTOS...';
-
-      const payload = {
-        id_tractor: selectedTractorId,
-        id_rancho_reporte: document.getElementById('select-fault-rancho').value,
-        prioridad: selectedPriority,
-        descripcion_falla: desc,
-        id_usuario_solicita: currentUser.id_usuario,
-        estatus: 'PENDIENTE'
-      };
-
-      try {
-        if (isOnline) {
-          const inserted = await sbFetch('servicios_mantenimiento', {
-            method: 'POST',
-            headers: { Prefer: 'return=representation' },
-            body: JSON.stringify(payload)
-          });
-          const newServiceId = inserted[0].id_servicio;
-
-          for (const item of role2DraftFiles) {
-            const publicUrl = await uploadImageToSupabaseStorage(item.fileObj, `srv_${newServiceId}_init`);
-            await sbFetch('evidencias_servicio', {
-              method: 'POST',
-              body: JSON.stringify({
-                id_servicio: newServiceId,
-                etapa: 'PETICION_INICIAL',
-                url_imagen: publicUrl,
-                subido_por: currentUser.id_usuario
-              })
-            });
-          }
-
-          if (selectedPriority === 'URGENTE') {
-            await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(selectedTractorId)}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ estatus_operativo: 'EN_TALLER' })
-            });
-          }
-
-          await syncAllFromSupabase(false);
-          showToast(`✔ Petición #${newServiceId} enviada al taller.`, 'success');
-        } else {
-          enqueueOfflineAction({ table: 'servicios_mantenimiento', payload });
-          showToast('⏳ Petición guardada en cola offline.', 'info');
-        }
-
-        document.getElementById('input-fault-desc').value = '';
-        role2DraftFiles = [];
-        renderDraftPhotos('role2');
-        renderRole2MyTickets();
-      } catch (err) {
-        showToast(`Error al enviar reporte: ${err.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'ENVIAR PETICIÓN AL TALLER';
-      }
-    }
-
-    function renderRole2MyTickets() {
-      const container = document.getElementById('role2-my-tickets-list');
-      if (!container || !currentUser) return;
-      const mine = dbTickets.filter(t => t.id_usuario_solicita === currentUser.id_usuario);
-      if (mine.length === 0) {
-        container.innerHTML = `<p class="text-xs text-stone-500 text-center py-2">Sin peticiones registradas aún.</p>`;
-        return;
-      }
-      container.innerHTML = mine.map(t => `
-        <div class="bg-creamSand rounded-xl p-2.5 border border-stone-200 text-xs space-y-1">
-          <div class="flex justify-between items-center">
-            <strong class="text-forest">Ticket #${t.id_servicio} · #${t.id_tractor}</strong>
-            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.estatus === 'FINALIZADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-barnTerra'}">${t.estatus}</span>
-          </div>
-          <p class="text-stone-700">${t.descripcion_falla}</p>
-        </div>
-      `).join('');
-    }
-
-    // ==================== TALLER / CIERRE DE REPARACIÓN (TECNICO_MNT) ====================
-    function renderRole3TicketList() {
-      const container = document.getElementById('role3-tickets-list');
-      const badge = document.getElementById('role3-open-badge');
-      if (!container) return;
-
-      const openTickets = dbTickets.filter(t => t.estatus !== 'FINALIZADO');
-      badge.textContent = `${openTickets.length} abierta${openTickets.length === 1 ? '' : 's'}`;
-
-      if (openTickets.length === 0) {
-        container.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center border border-stone-200 text-xs text-stone-500">No hay peticiones abiertas en taller.</div>`;
-        return;
-      }
-
-      container.innerHTML = openTickets.map(t => {
-        const tr = dbTractors.find(x => x.id_tractor === t.id_tractor);
-        const isSel = activeTicketIdForRole3 === t.id_servicio;
-        return `
-          <button type="button" onclick="openTicketForRepair(${t.id_servicio})"
-            class="w-full text-left bg-white hover:bg-emerald-50/40 rounded-2xl p-3.5 border-2 ${isSel ? 'border-emeraldAgro' : 'border-stone-200'} shadow-sm space-y-1.5 transition">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-forest text-white">#${t.id_tractor} · Ticket #${t.id_servicio}</span>
-              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.prioridad === 'URGENTE' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-barnTerra'}">
-                ${t.estatus === 'EN_ESPERA' ? `⏳ ${t.motivo_espera}` : t.prioridad}
-              </span>
-            </div>
-            <h4 class="font-bold text-stone-900 text-sm">${tr ? tr.modelo : t.id_tractor}</h4>
-            <p class="text-xs text-stone-600 line-clamp-2">${t.descripcion_falla}</p>
-            <div class="flex justify-between text-[10px] text-stone-400 pt-1 border-t border-stone-100">
-              <span>Rancho reporte: ${RANCH_NAMES[t.id_rancho_reporte] || 'N/A'}</span>
-              <span class="font-bold text-emeraldAgro">Atender / Cerrar →</span>
-            </div>
-          </button>
-        `;
-      }).join('');
-    }
-
-    function openTicketForRepair(idServicio) {
-      const ticket = dbTickets.find(t => t.id_servicio === idServicio);
-      if (!ticket) return;
-      activeTicketIdForRole3 = idServicio;
-      renderRole3TicketList();
-
-      const tr = dbTractors.find(x => x.id_tractor === ticket.id_tractor);
-      const panel = document.getElementById('role3-close-panel');
-      panel.classList.remove('hidden');
-
-      document.getElementById('close-ticket-badge').textContent = `TICKET #${ticket.id_servicio} · ${ticket.prioridad}`;
-      document.getElementById('close-ticket-tractor').textContent = `#${ticket.id_tractor} · ${tr ? tr.modelo : ''}`;
-      document.getElementById('close-ticket-fault').textContent = ticket.descripcion_falla;
-      document.getElementById('input-repair-work').value = ticket.trabajo_realizado || '';
-
-      const initPhotos = dbEvidences.filter(e => e.id_servicio === idServicio && e.etapa === 'PETICION_INICIAL');
-      const initBox = document.getElementById('close-ticket-initial-photos');
-      const initRow = document.getElementById('close-initial-photos-row');
-      if (initPhotos.length > 0) {
-        initBox.classList.remove('hidden');
-        initRow.innerHTML = initPhotos.map(p => `<img src="${p.url_imagen}" class="w-16 h-16 rounded-xl object-cover border border-stone-300 shrink-0" />`).join('');
-      } else {
-        initBox.classList.add('hidden');
-      }
-
-      role3DraftFiles = [];
-      renderDraftPhotos('role3');
-      setResolutionStatus('FINALIZADO');
-      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    function closeRole3Panel() {
-      activeTicketIdForRole3 = null;
-      document.getElementById('role3-close-panel').classList.add('hidden');
-      renderRole3TicketList();
-    }
-
-    function setResolutionStatus(status) {
-      selectedResolution = status;
-      const btnF = document.getElementById('status-btn-finalizado');
-      const btnE = document.getElementById('status-btn-espera');
-      const waitBox = document.getElementById('wait-reason-box');
-      if (status === 'FINALIZADO') {
-        btnF.className = 'py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center';
-        btnE.className = 'py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center';
-        waitBox.classList.add('hidden');
-      } else {
-        btnF.className = 'py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center';
-        btnE.className = 'py-3 px-2.5 rounded-xl border-2 border-harvestGold bg-amber-50 text-barnTerra font-extrabold text-xs transition text-center';
-        waitBox.classList.remove('hidden');
-      }
-    }
-
-    async function submitRepairClosure() {
-      const ticket = dbTickets.find(t => t.id_servicio === activeTicketIdForRole3);
-      if (!ticket) return;
-
-      const workText = document.getElementById('input-repair-work').value.trim();
-      if (!workText) {
-        showToast('Describe el trabajo realizado.', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('btn-save-repair');
-      btn.disabled = true;
-      btn.textContent = 'GUARDANDO REPARACIÓN...';
-
-      const updatePayload = {
-        trabajo_realizado: workText,
-        estatus: selectedResolution,
-        id_usuario_repara: currentUser.id_usuario,
-        motivo_espera: selectedResolution === 'EN_ESPERA' ? document.getElementById('select-wait-reason').value : null,
-        fecha_cierre: selectedResolution === 'FINALIZADO' ? new Date().toISOString() : null
-      };
-
-      try {
-        await sbFetch(`servicios_mantenimiento?id_servicio=eq.${ticket.id_servicio}`, {
-          method: 'PATCH',
-          body: JSON.stringify(updatePayload)
-        });
-
-        for (const item of role3DraftFiles) {
-          const publicUrl = await uploadImageToSupabaseStorage(item.fileObj, `srv_${ticket.id_servicio}_final`);
-          await sbFetch('evidencias_servicio', {
-            method: 'POST',
-            body: JSON.stringify({
-              id_servicio: ticket.id_servicio,
-              etapa: 'REPARACION_FINAL',
-              url_imagen: publicUrl,
-              subido_por: currentUser.id_usuario
-            })
-          });
-        }
-
-        if (selectedResolution === 'FINALIZADO') {
-          await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(ticket.id_tractor)}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ estatus_operativo: 'ACTIVO' })
-          });
-        }
-
-        await syncAllFromSupabase(false);
-        closeRole3Panel();
-        showToast(`✔ Ticket #${ticket.id_servicio} actualizado a ${selectedResolution}.`, 'success');
-      } catch (err) {
-        showToast(`Error al actualizar servicio: ${err.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'CONFIRMAR Y GUARDAR SERVICIO';
-      }
-    }
-
-    // ==================== BITÁCORA / HISTORIAL ====================
-    function renderHistoryScreen() {
-      if (!currentUser) return;
-      const kpiGrid = document.getElementById('history-kpi-grid');
-      const listEl = document.getElementById('history-records-list');
-      const areaTag = document.getElementById('history-area-tag');
-      const areaTitle = document.getElementById('history-area-title');
-
-      let mode = 'DIESEL';
-      let ranchFilter = 'TODOS';
-
-      if (currentUser.rol === 'ADMIN') {
-        mode = document.getElementById('filter-history-tab').value;
-        ranchFilter = document.getElementById('filter-history-ranch').value;
-      } else if (currentUser.rol === 'DIESEL') {
-        mode = 'DIESEL';
-        ranchFilter = currentUser.id_rancho;
-      } else {
-        mode = 'MNT';
-      }
-
-      if (mode === 'DIESEL') {
-        areaTag.textContent = ranchFilter === 'TODOS' ? 'Consolidado 4 Ranchos' : `Bomba: ${RANCH_NAMES[ranchFilter]}`;
-        areaTitle.textContent = 'Bitácora de Cargas de Diésel';
-
-        const logs = ranchFilter === 'TODOS'
-          ? dbFuelLogs
-          : dbFuelLogs.filter(l => l.id_rancho_carga === ranchFilter);
-
-        const totalL = logs.reduce((acc, x) => acc + parseFloat(x.litros || 0), 0);
-        const crossCount = logs.filter(l => {
-          const tr = dbTractors.find(t => t.id_tractor === l.id_tractor);
-          return tr && tr.id_rancho_base !== l.id_rancho_carga;
-        }).length;
-
-        kpiGrid.innerHTML = `
-          <div class="bg-amber-50 rounded-xl p-2.5">
-            <span class="block text-base font-extrabold text-harvestGold">${totalL.toFixed(1)} L</span>
-            <span class="text-[10px] font-semibold text-stone-600">Total Despachado</span>
-          </div>
-          <div class="bg-sandCard rounded-xl p-2.5">
-            <span class="block text-base font-extrabold text-barnTerra">${crossCount}</span>
-            <span class="text-[10px] font-semibold text-stone-600">Cargas Cruzadas</span>
-          </div>
-        `;
-
-        if (logs.length === 0) {
-          listEl.innerHTML = `<p class="text-xs text-stone-500 text-center py-4">Sin registros de diésel para este filtro.</p>`;
-          return;
-        }
-
-        listEl.innerHTML = logs.map(l => {
-          const tr = dbTractors.find(t => t.id_tractor === l.id_tractor);
-          const isCross = tr && tr.id_rancho_base !== l.id_rancho_carga;
-          const dateStr = l.fecha_hora ? new Date(l.fecha_hora).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '';
-
-          return `
-            <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-1">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-harvestGold text-white">#${l.id_tractor}</span>
-                  <span class="text-xs font-bold text-stone-800">${tr ? tr.modelo : ''}</span>
-                </div>
-                <strong class="text-base font-extrabold text-harvestGold">${parseFloat(l.litros).toFixed(1)} L</strong>
-              </div>
-              <p class="text-xs font-semibold text-forest">Actividad: ${l.actividad}</p>
-              <div class="flex flex-wrap items-center justify-between gap-1 text-[11px] text-stone-500 pt-1 border-t border-stone-100">
-                <span>Bomba: <strong>${RANCH_NAMES[l.id_rancho_carga] || l.id_rancho_carga}</strong></span>
-                <span>${dateStr}</span>
-              </div>
-              ${isCross ? `<span class="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-barnTerra">🚜 Préstamo: Unidad base de ${RANCH_NAMES[tr.id_rancho_base]}</span>` : ''}
-            </div>
-          `;
-        }).join('');
-      } else {
-        areaTag.textContent = 'Control de Taller';
-        areaTitle.textContent = 'Historial de Mantenimientos';
-
-        let tickets = dbTickets;
-        if (currentUser.rol === 'SOLICITANTE_MNT') {
-          tickets = dbTickets.filter(t => t.id_usuario_solicita === currentUser.id_usuario);
-        } else if (ranchFilter !== 'TODOS') {
-          tickets = dbTickets.filter(t => t.id_rancho_reporte === ranchFilter);
-        }
-
-        const openC = tickets.filter(t => t.estatus !== 'FINALIZADO').length;
-        const doneC = tickets.filter(t => t.estatus === 'FINALIZADO').length;
-
-        kpiGrid.innerHTML = `
-          <div class="bg-orange-50 rounded-xl p-2.5">
-            <span class="block text-base font-extrabold text-barnTerra">${openC}</span>
-            <span class="text-[10px] font-semibold text-stone-600">Pendientes / Espera</span>
-          </div>
-          <div class="bg-emerald-50 rounded-xl p-2.5">
-            <span class="block text-base font-extrabold text-emeraldAgro">${doneC}</span>
-            <span class="text-[10px] font-semibold text-stone-600">Finalizados</span>
-          </div>
-        `;
-
-        listEl.innerHTML = tickets.map(t => `
-          <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-1">
-            <div class="flex justify-between items-center">
-              <strong class="text-xs text-forest">Ticket #${t.id_servicio} · #${t.id_tractor}</strong>
-              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.estatus === 'FINALIZADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-barnTerra'}">${t.estatus}</span>
-            </div>
-            <p class="text-xs text-stone-800">${t.descripcion_falla}</p>
-            ${t.trabajo_realizado ? `<p class="text-xs text-emeraldAgro bg-emerald-50 p-2 rounded-lg"><strong>Solución:</strong> ${t.trabajo_realizado}</p>` : ''}
-          </div>
-        `).join('');
-      }
-    }
-
-    function exportDataCSV() {
-      let csv = 'ID_CARGA,TRACTOR,RANCHO_CARGA,LITROS,ACTIVIDAD,HOROMETRO,USUARIO,FECHA\n';
-      dbFuelLogs.forEach(l => {
-        csv += `${l.id_carga},${l.id_tractor},"${RANCH_NAMES[l.id_rancho_carga] || l.id_rancho_carga}",${l.litros},"${l.actividad}",${l.horometro || ''},${l.id_usuario_diesel},${l.fecha_hora}\n`;
-      });
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `AgroFleet_Reporte_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      showToast('CSV descargado.', 'success');
-    }
-
-    // ==================== COLA OFFLINE Y UTILIDADES ====================
-    function loadOfflineQueue() {
-      try {
-        return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY)) || [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function enqueueOfflineAction(action) {
-      offlineQueue.push(action);
-      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(offlineQueue));
-      updateOfflineBadge();
-    }
-
-    async function flushOfflineQueue() {
-      if (!isOnline || offlineQueue.length === 0) return;
-      const pending = [...offlineQueue];
-      offlineQueue = [];
-      localStorage.setItem(OFFLINE_QUEUE_KEY, '[]');
-
-      let synced = 0;
-      for (const item of pending) {
-        try {
-          await sbFetch(item.table, { method: 'POST', body: JSON.stringify(item.payload) });
-          synced++;
-        } catch (e) {
-          offlineQueue.push(item);
-        }
-      }
-      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(offlineQueue));
-      updateOfflineBadge();
-      if (synced > 0) {
-        await syncAllFromSupabase(false);
-        showToast(`✔ ${synced} registro(s) offline sincronizado(s) con Supabase.`, 'success');
-      }
-    }
-
-    function toggleNetworkMode() {
-      isOnline = !isOnline;
-      const pill = document.getElementById('network-pill');
-      const dot = document.getElementById('network-dot');
-      const txt = document.getElementById('network-text');
-
-      if (isOnline) {
-        pill.className = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition bg-emeraldAgro/90 border border-emerald-300/40 text-white shadow-sm shrink-0';
-        dot.className = 'w-2 h-2 rounded-full bg-emerald-300 animate-pulse';
-        txt.textContent = 'EN LÍNEA';
-        flushOfflineQueue();
-      } else {
-        pill.className = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition bg-amber-600 border border-amber-300 text-white shadow-sm shrink-0';
-        dot.className = 'w-2 h-2 rounded-full bg-amber-200';
-        txt.textContent = 'SIN SEÑAL';
-        showToast('Modo Sin Señal activado: los registros se guardarán localmente.', 'info');
-      }
-    }
-
-    function updateOfflineBadge() {
-      const badge = document.getElementById('offline-badge');
-      if (offlineQueue.length > 0) {
-        badge.textContent = offlineQueue.length;
-        badge.classList.remove('hidden');
-      } else {
-        badge.classList.add('hidden');
-      }
-    }
-
-    function showToast(msg, type = 'info') {
-      const container = document.getElementById('toast-container');
-      const colors = {
-        success: 'bg-forest text-white border-emerald-400',
-        error: 'bg-red-800 text-white border-red-400',
-        info: 'bg-stone-800 text-amber-100 border-amber-400/50'
-      };
-      const div = document.createElement('div');
-      div.className = `px-3.5 py-2.5 rounded-xl border text-xs font-semibold shadow-lg ${colors[type] || colors.info}`;
-      div.textContent = msg;
-      container.innerHTML = '';
-      container.appendChild(div);
-      setTimeout(() => { if (container.contains(div)) container.removeChild(div); }, 3600);
-    }
-
-    window.addEventListener('online', () => { if (!isOnline) toggleNetworkMode(); });
-    window.addEventListener('offline', () => { if (isOnline) toggleNetworkMode(); });
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      updateOfflineBadge();
-      renderFilteredActivities();
-      const savedSession = sessionStorage.getItem(SESSION_KEY);
-      if (savedSession) {
-        try {
-          const user = JSON.parse(savedSession);
-          await startUserSession(user);
-        } catch (e) {}
-      }
-    });
-  </script>
+  <!-- Punto de entrada modular ES6 -->
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
