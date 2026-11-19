@@ -1,624 +1,673 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#1B4332" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="AgroFleet QR" />
-  <title>AgroFleet QR · Control Multi-Rancho de Diésel y Mantenimiento</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#1B4332" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AgroFleet QR" />
+    <title>AgroFleet QR · Control Multi-Rancho de Diésel y Mantenimiento</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2316/2316674.png" />
-  <link rel="stylesheet" href="css/styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2316/2316674.png" />
+    <link rel="stylesheet" href="css/styles.css" />
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-          colors: {
-            forest: '#1B4332',
-            emeraldAgro: '#2D6A4F',
-            harvestGold: '#C87D16',
-            barnTerra: '#9A3412',
-            creamSand: '#FAF8F5',
-            sandCard: '#F3EFEA',
-          }
-        }
-      }
-    };
-  </script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    colors: {
+                        forest: '#1B4332',
+                        emeraldAgro: '#2D6A4F',
+                        harvestGold: '#C87D16',
+                        barnTerra: '#9A3412',
+                        creamSand: '#FAF8F5',
+                        sandCard: '#F3EFEA',
+                    }
+                }
+            }
+        };
+    </script>
 </head>
+
 <body class="min-h-screen flex justify-center items-start sm:py-4">
 
-  <div id="app-shell" class="w-full max-w-md min-h-screen sm:min-h-[850px] sm:rounded-[34px] sm:shadow-2xl sm:border-[8px] sm:border-[#1E2421] bg-creamSand flex flex-col overflow-hidden relative">
+    <div id="app-shell" class="w-full max-w-md min-h-screen sm:min-h-[850px] sm:rounded-[34px] sm:shadow-2xl sm:border-[8px] sm:border-[#1E2421] bg-creamSand flex flex-col overflow-hidden relative">
 
-    <!-- HEADER CORPORATIVO -->
-    <header class="bg-forest text-white px-4 pt-4 pb-3 shadow-md z-20">
-      <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 rounded-xl bg-emeraldAgro border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
-            <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <!-- HEADER CORPORATIVO -->
+        <header class="bg-forest text-white px-4 pt-4 pb-3 shadow-md z-20">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-emeraldAgro border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
+                        <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10M12 7v10" />
             </svg>
-          </div>
-          <div class="truncate">
-            <div class="flex items-center gap-1.5">
-              <h1 class="font-extrabold text-base tracking-tight leading-none">AgroFleet QR</h1>
-              <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emeraldAgro text-emerald-100 border border-emerald-400/30">LIVE DB</span>
-            </div>
-            <p id="header-rancho-subtitle" class="text-[11px] text-amber-200 font-semibold mt-0.5 truncate">
-              El Edén · Matanuzka · La Esperanza · Arados
-            </p>
-          </div>
-        </div>
+                    </div>
+                    <div class="truncate">
+                        <div class="flex items-center gap-1.5">
+                            <h1 class="font-extrabold text-base tracking-tight leading-none">AgroFleet QR</h1>
+                            <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emeraldAgro text-emerald-100 border border-emerald-400/30">LIVE DB</span>
+                        </div>
+                        <p id="header-rancho-subtitle" class="text-[11px] text-amber-200 font-semibold mt-0.5 truncate">
+                            El Edén · Matanuzka · La Esperanza · Arados
+                        </p>
+                    </div>
+                </div>
 
-        <button id="network-pill" onclick="toggleNetworkMode()" title="Toca para probar modo Sin Señal o sincronizar"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition active:scale-95 bg-emeraldAgro/90 border border-emerald-300/40 text-white shadow-sm shrink-0">
+                <button id="network-pill" onclick="toggleNetworkMode()" title="Toca para probar modo Sin Señal o sincronizar" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition active:scale-95 bg-emeraldAgro/90 border border-emerald-300/40 text-white shadow-sm shrink-0">
           <span id="network-dot" class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
           <span id="network-text">EN LÍNEA</span>
           <span id="offline-badge" class="hidden ml-0.5 bg-amber-400 text-forest px-1.5 py-0.2 rounded-full text-[10px] font-extrabold">0</span>
         </button>
-      </div>
-
-      <div id="active-role-bar" class="hidden mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-xs">
-        <div class="flex items-center gap-2 truncate">
-          <span id="role-pill-badge" class="px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase tracking-wider bg-harvestGold text-white shrink-0">ROL</span>
-          <span id="active-user-name" class="font-semibold text-white truncate">Usuario</span>
-        </div>
-        <div class="flex items-center gap-1.5 shrink-0 ml-2">
-          <button onclick="syncAllFromSupabase(true)" title="Actualizar datos desde Supabase" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 transition">🔄</button>
-          <button onclick="logoutUser()" class="px-2.5 py-1 rounded-lg bg-red-900/70 hover:bg-red-800 border border-red-400/40 text-amber-100 hover:text-white font-bold text-[11px] transition">Salir</button>
-        </div>
-      </div>
-    </header>
-
-    <!-- NOTIFICACIONES / TOAST -->
-    <div id="toast-container" class="px-4 pt-2 z-30 empty:hidden"></div>
-
-    <!-- CONTENIDO PRINCIPAL -->
-    <main class="flex-1 overflow-y-auto px-4 py-4 pb-24 space-y-4">
-
-      <!-- 1. LOGIN -->
-      <section id="screen-login" class="space-y-4">
-        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-emeraldAgro bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">Acceso por Rol y Rancho</span>
-            <span id="db-conn-indicator" class="text-[11px] font-bold text-emerald-700">● Supabase Conectado</span>
-          </div>
-          <h2 class="text-lg font-extrabold text-forest mt-2">Iniciar Sesión</h2>
-          <p class="text-xs text-stone-600 mt-1">Ingresa tu usuario y PIN. El sistema habilitará únicamente las áreas autorizadas para tu perfil.</p>
-
-          <div id="pwa-install-banner" class="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center justify-between gap-2">
-            <div class="text-[11px] text-forest leading-tight">
-              <strong class="block font-extrabold">📲 Instalar App en este teléfono</strong>
-              <span id="pwa-install-hint" class="text-stone-600">Menú del navegador → "Agregar a pantalla de inicio"</span>
             </div>
-            <button id="btn-install-pwa" type="button" onclick="triggerPWAInstall()" class="hidden shrink-0 px-3 py-1.5 rounded-lg bg-forest text-white text-xs font-extrabold shadow-sm">Instalar</button>
-          </div>
 
-          <form onsubmit="handleLoginSubmit(event)" class="mt-4 space-y-3">
-            <div>
-              <label for="login-username" class="block text-xs font-bold text-stone-700 mb-1">ID de Usuario</label>
-              <input id="login-username" type="text" autocomplete="username" placeholder="Ej. admin01, diesel_eden, campo02, taller03"
-                class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-sm font-bold text-stone-900" required />
+            <div id="active-role-bar" class="hidden mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 truncate">
+                    <span id="role-pill-badge" class="px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase tracking-wider bg-harvestGold text-white shrink-0">ROL</span>
+                    <span id="active-user-name" class="font-semibold text-white truncate">Usuario</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                    <button onclick="syncAllFromSupabase(true)" title="Actualizar datos desde Supabase" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 transition">🔄</button>
+                    <button onclick="logoutUser()" class="px-2.5 py-1 rounded-lg bg-red-900/70 hover:bg-red-800 border border-red-400/40 text-amber-100 hover:text-white font-bold text-[11px] transition">Salir</button>
+                </div>
             </div>
-            <div>
-              <label for="login-pin" class="block text-xs font-bold text-stone-700 mb-1">PIN de Acceso</label>
-              <input id="login-pin" type="password" inputmode="numeric" maxlength="10" placeholder="••••"
-                class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-base font-extrabold tracking-widest text-stone-900" required />
-            </div>
-            <button id="btn-login-submit" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
+        </header>
+
+        <!-- NOTIFICACIONES / TOAST -->
+        <div id="toast-container" class="px-4 pt-2 z-30 empty:hidden"></div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-1 overflow-y-auto px-4 py-4 pb-24 space-y-4">
+
+            <!-- 1. LOGIN -->
+            <section id="screen-login" class="space-y-4">
+                <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-emeraldAgro bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">Acceso por Rol y Rancho</span>
+                        <span id="db-conn-indicator" class="text-[11px] font-bold text-emerald-700">● Supabase Conectado</span>
+                    </div>
+                    <h2 class="text-lg font-extrabold text-forest mt-2">Iniciar Sesión</h2>
+                    <p class="text-xs text-stone-600 mt-1">Ingresa tu usuario y PIN. El sistema habilitará únicamente las áreas autorizadas para tu perfil.</p>
+
+                    <div id="pwa-install-banner" class="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                        <div class="text-[11px] text-forest leading-tight">
+                            <strong class="block font-extrabold">📲 Instalar App en este teléfono</strong>
+                            <span id="pwa-install-hint" class="text-stone-600">Menú del navegador → "Agregar a pantalla de inicio"</span>
+                        </div>
+                        <button id="btn-install-pwa" type="button" onclick="triggerPWAInstall()" class="hidden shrink-0 px-3 py-1.5 rounded-lg bg-forest text-white text-xs font-extrabold shadow-sm">Instalar</button>
+                    </div>
+
+                    <form onsubmit="handleLoginSubmit(event)" class="mt-4 space-y-3">
+                        <div>
+                            <label for="login-username" class="block text-xs font-bold text-stone-700 mb-1">ID de Usuario</label>
+                            <input id="login-username" type="text" autocomplete="username" placeholder="Ej. admin01, diesel_eden, campo02, taller03" class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-sm font-bold text-stone-900"
+                                required />
+                        </div>
+                        <div>
+                            <label for="login-pin" class="block text-xs font-bold text-stone-700 mb-1">PIN de Acceso</label>
+                            <input id="login-pin" type="password" inputmode="numeric" maxlength="10" placeholder="••••" class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-base font-extrabold tracking-widest text-stone-900"
+                                required />
+                        </div>
+                        <button id="btn-login-submit" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
               INGRESAR AL SISTEMA →
             </button>
-          </form>
-        </div>
-      </section>
+                    </form>
+                </div>
+            </section>
 
-      <!-- 2. ESCÁNER QR COMPARTIDO -->
-      <section id="qr-scanner-module" class="hidden space-y-3">
-        <div class="bg-[#1C231F] text-white rounded-2xl p-4 shadow-md border border-stone-700">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-              Escanear Código QR del Tractor
-            </span>
-            <button id="btn-toggle-camera" type="button" onclick="toggleRealCamera()" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emeraldAgro hover:bg-emerald-700 text-white transition">
+            <!-- 2. ESCÁNER QR COMPARTIDO -->
+            <section id="qr-scanner-module" class="hidden space-y-3">
+                <div class="bg-[#1C231F] text-white rounded-2xl p-4 shadow-md border border-stone-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> Escanear Código QR del Tractor
+                        </span>
+                        <button id="btn-toggle-camera" type="button" onclick="toggleRealCamera()" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emeraldAgro hover:bg-emerald-700 text-white transition">
               📷 Abrir Cámara
             </button>
-          </div>
-          <div id="real-camera-box" class="hidden mb-3 rounded-xl overflow-hidden bg-black border border-amber-400/60">
-            <div id="qr-reader" class="w-full"></div>
-            <p class="text-[11px] text-center text-stone-300 py-1.5 bg-stone-900">Enfoca la etiqueta QR del tractor</p>
-          </div>
-          <div id="simulated-qr-box" class="space-y-2">
-            <p class="text-[11px] text-stone-300">O selecciona un tractor registrado en la base de datos:</p>
-            <div id="quick-tractors-list" class="flex flex-wrap gap-1.5">
-              <span class="text-xs text-amber-200">Cargando tractores...</span>
-            </div>
-          </div>
-        </div>
+                    </div>
+                    <div id="real-camera-box" class="hidden mb-3 rounded-xl overflow-hidden bg-black border border-amber-400/60">
+                        <div id="qr-reader" class="w-full"></div>
+                        <p class="text-[11px] text-center text-stone-300 py-1.5 bg-stone-900">Enfoca la etiqueta QR del tractor</p>
+                    </div>
+                    <div id="simulated-qr-box" class="space-y-2">
+                        <p class="text-[11px] text-stone-300">O selecciona un tractor registrado en la base de datos:</p>
+                        <div id="quick-tractors-list" class="flex flex-wrap gap-1.5">
+                            <span class="text-xs text-amber-200">Cargando tractores...</span>
+                        </div>
+                    </div>
+                </div>
 
-        <div id="selected-tractor-card" class="hidden bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-2">
-          <div class="flex items-center justify-between gap-2">
-            <div>
-              <div class="flex items-center gap-2">
-                <span id="ui-tractor-id" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-forest text-white">#TRC-001</span>
-                <span id="ui-tractor-status" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">ACTIVO</span>
-              </div>
-              <h3 id="ui-tractor-model" class="font-bold text-stone-900 text-sm mt-1">Modelo</h3>
-              <p id="ui-tractor-meta" class="text-[11px] text-stone-500">Serie · Rancho Base · Tanque</p>
-            </div>
-            <div class="text-right shrink-0">
-              <span class="block text-[10px] font-bold uppercase text-stone-400">Rancho Base</span>
-              <span id="ui-tractor-owner-rancho" class="text-xs font-extrabold text-forest">El Edén</span>
-            </div>
-          </div>
+                <div id="selected-tractor-card" class="hidden bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span id="ui-tractor-id" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-forest text-white">#TRC-001</span>
+                                <span id="ui-tractor-status" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">ACTIVO</span>
+                            </div>
+                            <h3 id="ui-tractor-model" class="font-bold text-stone-900 text-sm mt-1">Modelo</h3>
+                            <p id="ui-tractor-meta" class="text-[11px] text-stone-500">Serie · Rancho Base · Tanque</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="block text-[10px] font-bold uppercase text-stone-400">Rancho Base</span>
+                            <span id="ui-tractor-owner-rancho" class="text-xs font-extrabold text-forest">El Edén</span>
+                        </div>
+                    </div>
 
-          <div id="cross-ranch-alert" class="hidden bg-amber-100 border border-amber-400 rounded-xl p-2.5 text-xs text-amber-950 flex items-start gap-2">
-            <span class="text-base leading-none">🚜</span>
-            <div>
-              <strong class="block font-extrabold text-barnTerra uppercase text-[10px]">Préstamo / Carga Cruzada entre Ranchos</strong>
-              <span id="cross-ranch-text" class="text-[11px] font-semibold"></span>
-            </div>
-          </div>
-        </div>
+                    <div id="cross-ranch-alert" class="hidden bg-amber-100 border border-amber-400 rounded-xl p-2.5 text-xs text-amber-950 flex items-start gap-2">
+                        <span class="text-base leading-none">🚜</span>
+                        <div>
+                            <strong class="block font-extrabold text-barnTerra uppercase text-[10px]">Préstamo / Carga Cruzada entre Ranchos</strong>
+                            <span id="cross-ranch-text" class="text-[11px] font-semibold"></span>
+                        </div>
+                    </div>
+                </div>
 
-        <div id="no-tractors-warning" class="hidden bg-amber-50 border-2 border-harvestGold rounded-2xl p-4 text-center space-y-2">
-          <p class="text-sm font-extrabold text-forest">Aún no hay tractores dados de alta</p>
-          <p class="text-xs text-stone-600">Registra el primer tractor y genera su etiqueta QR para comenzar.</p>
-          <button id="btn-go-register-qr" type="button" onclick="switchScreen('tractors-qr')" class="hidden px-4 py-2 rounded-xl bg-harvestGold text-white text-xs font-extrabold shadow-sm">
+                <div id="no-tractors-warning" class="hidden bg-amber-50 border-2 border-harvestGold rounded-2xl p-4 text-center space-y-2">
+                    <p class="text-sm font-extrabold text-forest">Aún no hay tractores dados de alta</p>
+                    <p class="text-xs text-stone-600">Registra el primer tractor y genera su etiqueta QR para comenzar.</p>
+                    <button id="btn-go-register-qr" type="button" onclick="switchScreen('tractors-qr')" class="hidden px-4 py-2 rounded-xl bg-harvestGold text-white text-xs font-extrabold shadow-sm">
             + Dar de Alta Tractor y Generar QR
           </button>
-        </div>
-      </section>
+                </div>
+            </section>
 
-      <!-- 3. CARGAS DE DIÉSEL -->
-      <section id="screen-diesel" class="hidden space-y-3.5">
-        <div class="bg-white rounded-2xl p-4 border-2 border-harvestGold shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-stone-100 pb-2">
-            <span class="text-xs font-extrabold uppercase tracking-wider text-harvestGold">Despacho de Combustible</span>
-            <div id="admin-ranch-selector-box" class="hidden">
-              <select id="select-admin-charge-ranch" onchange="updateCrossRanchBanner()" class="bg-amber-50 border border-harvestGold rounded-lg px-2 py-1 text-xs font-bold text-forest">
+            <!-- 3. CARGAS DE DIÉSEL -->
+            <section id="screen-diesel" class="hidden space-y-3.5">
+                <div class="bg-white rounded-2xl p-4 border-2 border-harvestGold shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-harvestGold">Despacho de Combustible</span>
+                        <div id="admin-ranch-selector-box" class="hidden">
+                            <select id="select-admin-charge-ranch" onchange="updateCrossRanchBanner()" class="bg-amber-50 border border-harvestGold rounded-lg px-2 py-1 text-xs font-bold text-forest">
                 <option value="EDEN">Bomba: El Edén</option>
                 <option value="MATANUZKA">Bomba: Matanuzka</option>
                 <option value="ESPERANZA">Bomba: La Esperanza</option>
                 <option value="ARADOS">Bomba: Arados</option>
               </select>
-            </div>
-          </div>
+                        </div>
+                    </div>
 
-          <div>
-            <label for="input-liters" class="block text-xs font-extrabold uppercase tracking-wider text-stone-600 mb-1.5">Litros Suministrados *</label>
-            <div class="relative">
-              <input id="input-liters" type="number" step="0.1" min="0.5" max="2000" inputmode="decimal" placeholder="0.0"
-                class="w-full text-center text-3xl font-extrabold text-stone-900 bg-creamSand border-2 border-harvestGold/50 focus:border-harvestGold focus:outline-none rounded-2xl py-3 px-4" />
-              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-harvestGold">LITROS</span>
-            </div>
-            <div class="grid grid-cols-4 gap-2 mt-2">
-              <button type="button" onclick="setQuickLiters(40)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">40 L</button>
-              <button type="button" onclick="setQuickLiters(60)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">60 L</button>
-              <button type="button" onclick="setQuickLiters(85)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">85 L</button>
-              <button type="button" onclick="setQuickLiters(120)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">120 L</button>
-            </div>
-          </div>
+                    <div>
+                        <label for="input-liters" class="block text-xs font-extrabold uppercase tracking-wider text-stone-600 mb-1.5">Litros Suministrados *</label>
+                        <div class="relative">
+                            <input id="input-liters" type="number" step="0.1" min="0.5" max="2000" inputmode="decimal" placeholder="0.0" class="w-full text-center text-3xl font-extrabold text-stone-900 bg-creamSand border-2 border-harvestGold/50 focus:border-harvestGold focus:outline-none rounded-2xl py-3 px-4"
+                            />
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-harvestGold">LITROS</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 mt-2">
+                            <button type="button" onclick="setQuickLiters(40)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">40 L</button>
+                            <button type="button" onclick="setQuickLiters(60)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">60 L</button>
+                            <button type="button" onclick="setQuickLiters(85)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">85 L</button>
+                            <button type="button" onclick="setQuickLiters(120)" class="py-1.5 rounded-lg bg-sandCard hover:bg-amber-100 text-xs font-bold text-stone-700">120 L</button>
+                        </div>
+                    </div>
 
-          <div class="bg-creamSand rounded-2xl p-3 border border-stone-200 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <label class="block text-xs font-extrabold uppercase tracking-wider text-forest">Actividad del Tractor *</label>
-              <span id="activity-count-hint" class="text-[10px] font-bold text-stone-500">60 tareas</span>
-            </div>
+                    <div class="bg-creamSand rounded-2xl p-3 border border-stone-200 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-extrabold uppercase tracking-wider text-forest">Actividad del Tractor *</label>
+                            <span id="activity-count-hint" class="text-[10px] font-bold text-stone-500">60 tareas</span>
+                        </div>
 
-            <div id="area-filter-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-              <button type="button" onclick="setAreaFilter('TODAS')" data-area="TODAS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-forest text-white">Todas</button>
-              <button type="button" onclick="setAreaFilter('CAMPO')" data-area="CAMPO" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🌾 Campo</button>
-              <button type="button" onclick="setAreaFilter('ESTABLO')" data-area="ESTABLO" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🐄 Establo</button>
-              <button type="button" onclick="setAreaFilter('ALIMENTACION')" data-area="ALIMENTACION" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🌿 Alimentación</button>
-              <button type="button" onclick="setAreaFilter('COMPOSTA')" data-area="COMPOSTA" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">♻️ Composta</button>
-              <button type="button" onclick="setAreaFilter('TRASLADOS')" data-area="TRASLADOS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🚛 Traslados</button>
-              <button type="button" onclick="setAreaFilter('OTRAS')" data-area="OTRAS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">⚙️ Otras áreas</button>
-            </div>
+                        <div id="area-filter-chips" class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                            <button type="button" onclick="setAreaFilter('TODAS')" data-area="TODAS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-forest text-white">Todas</button>
+                            <button type="button" onclick="setAreaFilter('CAMPO')" data-area="CAMPO" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🌾 Campo</button>
+                            <button type="button" onclick="setAreaFilter('ESTABLO')" data-area="ESTABLO" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🐄 Establo</button>
+                            <button type="button" onclick="setAreaFilter('ALIMENTACION')" data-area="ALIMENTACION" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🌿 Alimentación</button>
+                            <button type="button" onclick="setAreaFilter('COMPOSTA')" data-area="COMPOSTA" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">♻️ Composta</button>
+                            <button type="button" onclick="setAreaFilter('TRASLADOS')" data-area="TRASLADOS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">🚛 Traslados</button>
+                            <button type="button" onclick="setAreaFilter('OTRAS')" data-area="OTRAS" class="area-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-stone-700 border border-stone-300">⚙️ Otras áreas</button>
+                        </div>
 
-            <input id="input-activity-search" type="text" oninput="renderFilteredActivities()" placeholder="🔍 Buscar tarea (ej. alfalfa, corrales, 15...)"
-              class="w-full bg-white border border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2 px-3 text-xs font-semibold text-stone-800" />
+                        <input id="input-activity-search" type="text" oninput="renderFilteredActivities()" placeholder="🔍 Buscar tarea (ej. alfalfa, corrales, 15...)" class="w-full bg-white border border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2 px-3 text-xs font-semibold text-stone-800"
+                        />
 
-            <select id="select-activity" onchange="toggleCustomActivity()"
-              class="w-full bg-white border-2 border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2.5 px-3 text-sm font-bold text-stone-900"></select>
+                        <select id="select-activity" onchange="toggleCustomActivity()" class="w-full bg-white border-2 border-stone-300 focus:border-harvestGold focus:outline-none rounded-xl py-2.5 px-3 text-sm font-bold text-stone-900"></select>
 
-            <input id="input-custom-activity" type="text" placeholder="Escribe la actividad específica..."
-              class="hidden w-full bg-white border border-harvestGold rounded-xl py-2 px-3 text-sm font-semibold text-stone-900" />
-          </div>
+                        <input id="input-custom-activity" type="text" placeholder="Escribe la actividad específica..." class="hidden w-full bg-white border border-harvestGold rounded-xl py-2 px-3 text-sm font-semibold text-stone-900" />
+                    </div>
 
-          <div>
-            <label for="input-horometer" class="block text-xs font-bold text-stone-600 mb-1">Horómetro Actual (Opcional)</label>
-            <input id="input-horometer" type="number" step="0.1" inputmode="decimal" placeholder="Ej. 4225.5"
-              class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-sm font-bold text-stone-800" />
-          </div>
+                    <div>
+                        <label for="input-horometer" class="block text-xs font-bold text-stone-600 mb-1">Horómetro Actual (Opcional)</label>
+                        <input id="input-horometer" type="number" step="0.1" inputmode="decimal" placeholder="Ej. 4225.5" class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-sm font-bold text-stone-800" />
+                    </div>
 
-          <button id="btn-save-diesel" type="button" onclick="openFuelConfirmModal()"
-            class="w-full py-4 rounded-2xl bg-harvestGold hover:bg-amber-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
+                    <button id="btn-save-diesel" type="button" onclick="openFuelConfirmModal()" class="w-full py-4 rounded-2xl bg-harvestGold hover:bg-amber-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
             REVISAR Y REGISTRAR CARGA →
           </button>
-        </div>
-      </section>
+                </div>
+            </section>
 
-      <!-- 4. ALTA DE TRACTORES Y GENERADOR QR -->
-      <section id="screen-tractors-qr" class="hidden space-y-4">
-        <div class="bg-white rounded-2xl p-4 border-2 border-forest shadow-sm space-y-3.5">
-          <div>
-            <span class="text-[11px] font-extrabold uppercase tracking-wider text-emeraldAgro">Catálogo de Maquinaria</span>
-            <h2 class="text-base font-extrabold text-forest">Alta de Tractor y Generación de QR</h2>
-            <p class="text-xs text-stone-500 mt-0.5">El sistema asignará automáticamente un ID único e irrepetible (ej. TRC-001) y generará su etiqueta lista para imprimir.</p>
-          </div>
+            <!-- 4. ALTA DE TRACTORES Y GENERADOR QR -->
+            <section id="screen-tractors-qr" class="hidden space-y-4">
+                <div class="bg-white rounded-2xl p-4 border-2 border-forest shadow-sm space-y-3.5">
+                    <div>
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-emeraldAgro">Catálogo de Maquinaria</span>
+                        <h2 class="text-base font-extrabold text-forest">Alta de Tractor y Generación de QR</h2>
+                        <p class="text-xs text-stone-500 mt-0.5">El sistema asignará automáticamente un ID único e irrepetible (ej. TRC-001) y generará su etiqueta lista para imprimir.</p>
+                    </div>
 
-          <form onsubmit="handleCreateTractor(event)" class="space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-stone-700 mb-1">Marca y Modelo del Tractor *</label>
-              <input id="new-trc-model" type="text" placeholder="Ej. John Deere 6110J" required
-                class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3 text-sm font-bold text-stone-900" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Base (Dueño de la unidad) *</label>
-              <select id="new-trc-rancho" required
-                class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3 text-xs font-bold text-stone-900">
+                    <form onsubmit="handleCreateTractor(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Marca y Modelo del Tractor *</label>
+                            <input id="new-trc-model" type="text" placeholder="Ej. John Deere 6110J" required class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3 text-sm font-bold text-stone-900" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Base (Dueño de la unidad) *</label>
+                            <select id="new-trc-rancho" required class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3 text-xs font-bold text-stone-900">
                 <option value="EDEN">El Edén</option>
                 <option value="MATANUZKA">Matanuzka</option>
                 <option value="ESPERANZA">La Esperanza</option>
                 <option value="ARADOS">Arados</option>
               </select>
-            </div>
-            <div class="grid grid-cols-2 gap-2.5">
-              <div>
-                <label class="block text-xs font-bold text-stone-700 mb-1">No. de Serie</label>
-                <input id="new-trc-serial" type="text" placeholder="Ej. 1BM6110J"
-                  class="w-full uppercase bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2 px-3 text-xs font-bold text-stone-900" />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-stone-700 mb-1">Tanque (Litros)</label>
-                <input id="new-trc-tank" type="number" step="1" placeholder="180"
-                  class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2 px-3 text-xs font-bold text-stone-900" />
-              </div>
-            </div>
-            <button id="btn-create-tractor" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-sm shadow-md transition">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-xs font-bold text-stone-700 mb-1">No. de Serie</label>
+                                <input id="new-trc-serial" type="text" placeholder="Ej. 1BM6110J" class="w-full uppercase bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2 px-3 text-xs font-bold text-stone-900" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-stone-700 mb-1">Tanque (Litros)</label>
+                                <input id="new-trc-tank" type="number" step="1" placeholder="180" class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2 px-3 text-xs font-bold text-stone-900" />
+                            </div>
+                        </div>
+                        <button id="btn-create-tractor" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-sm shadow-md transition">
               GUARDAR TRACTOR Y GENERAR QR
             </button>
-          </form>
-        </div>
+                    </form>
+                </div>
 
-        <div id="generated-qr-wrapper" class="hidden bg-white rounded-2xl p-4 border-2 border-harvestGold shadow-md space-y-3 text-center">
-          <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-barnTerra px-2.5 py-0.5 rounded-full">
+                <div id="generated-qr-wrapper" class="hidden bg-white rounded-2xl p-4 border-2 border-harvestGold shadow-md space-y-3 text-center">
+                    <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-barnTerra px-2.5 py-0.5 rounded-full">
             Etiqueta QR Lista para Pegar en Tractor
           </span>
-          <div id="printable-qr-card" class="mx-auto max-w-[260px] bg-white border-4 border-forest rounded-2xl p-4 flex flex-col items-center space-y-2">
-            <span class="text-[10px] font-extrabold uppercase tracking-widest text-emeraldAgro">AGROFLEET QR</span>
-            <div id="qrcode-canvas-box" class="p-2 bg-white rounded-xl"></div>
-            <div class="text-center">
-              <strong id="qr-card-id" class="block text-2xl font-black text-forest tracking-tight">#TRC-001</strong>
-              <span id="qr-card-model" class="block text-xs font-bold text-stone-800">John Deere 6110J</span>
-              <span id="qr-card-rancho" class="inline-block mt-1 text-[10px] font-extrabold px-2 py-0.5 rounded bg-sandCard text-stone-700">Base: El Edén</span>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button type="button" onclick="downloadQRLabelPNG()" class="py-2.5 px-3 rounded-xl bg-harvestGold hover:bg-amber-700 text-white font-extrabold text-xs shadow-sm">⬇ Descargar PNG</button>
-            <button type="button" onclick="printQRInPWA()" class="py-2.5 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-sm">🖨️ Imprimir Etiqueta</button>
-          </div>
-          <button id="btn-share-qr" type="button" onclick="shareQRLabelPWA()" class="w-full py-2 px-3 rounded-xl bg-sandCard hover:bg-stone-200 text-forest font-bold text-xs border border-stone-300">
+                    <div id="printable-qr-card" class="mx-auto max-w-[260px] bg-white border-4 border-forest rounded-2xl p-4 flex flex-col items-center space-y-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-emeraldAgro">AGROFLEET QR</span>
+                        <div id="qrcode-canvas-box" class="p-2 bg-white rounded-xl"></div>
+                        <div class="text-center">
+                            <strong id="qr-card-id" class="block text-2xl font-black text-forest tracking-tight">#TRC-001</strong>
+                            <span id="qr-card-model" class="block text-xs font-bold text-stone-800">John Deere 6110J</span>
+                            <span id="qr-card-rancho" class="inline-block mt-1 text-[10px] font-extrabold px-2 py-0.5 rounded bg-sandCard text-stone-700">Base: El Edén</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button type="button" onclick="downloadQRLabelPNG()" class="py-2.5 px-3 rounded-xl bg-harvestGold hover:bg-amber-700 text-white font-extrabold text-xs shadow-sm">⬇ Descargar PNG</button>
+                        <button type="button" onclick="printQRInPWA()" class="py-2.5 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-sm">🖨️ Imprimir Etiqueta</button>
+                    </div>
+                    <button id="btn-share-qr" type="button" onclick="shareQRLabelPWA()" class="w-full py-2 px-3 rounded-xl bg-sandCard hover:bg-stone-200 text-forest font-bold text-xs border border-stone-300">
             📤 Compartir Etiqueta (WhatsApp / Impresora Bluetooth)
           </button>
-        </div>
+                </div>
 
-        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-2.5">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xs font-extrabold uppercase tracking-wider text-stone-700">Tractores Registrados en BD</h3>
-            <span id="tractors-total-count" class="text-xs font-extrabold text-forest">0 unidades</span>
-          </div>
-          <div id="tractors-catalog-list" class="space-y-2"></div>
-        </div>
-      </section>
+                <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-extrabold uppercase tracking-wider text-stone-700">Tractores Registrados en BD</h3>
+                        <span id="tractors-total-count" class="text-xs font-extrabold text-forest">0 unidades</span>
+                    </div>
+                    <div id="tractors-catalog-list" class="space-y-2"></div>
+                </div>
+            </section>
 
-      <!-- 5. REPORTAR FALLA -->
-      <section id="screen-report-fault" class="hidden space-y-3.5">
-        <div class="bg-white rounded-2xl p-4 border-2 border-barnTerra shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-stone-100 pb-2">
-            <div>
-              <span class="text-[11px] font-extrabold uppercase tracking-wider text-barnTerra">Petición de Mantenimiento</span>
-              <h3 class="font-bold text-stone-900 text-sm">Reportar Falla en Campo / Establos</h3>
-            </div>
-            <span class="text-[10px] font-extrabold px-2 py-1 rounded-lg bg-orange-100 text-barnTerra">PENDIENTE</span>
-          </div>
+            <!-- 5. REPORTAR FALLA -->
+            <section id="screen-report-fault" class="hidden space-y-3.5">
+                <div class="bg-white rounded-2xl p-4 border-2 border-barnTerra shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                        <div>
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider text-barnTerra">Petición de Mantenimiento</span>
+                            <h3 class="font-bold text-stone-900 text-sm">Reportar Falla en Campo / Establos</h3>
+                        </div>
+                        <span class="text-[10px] font-extrabold px-2 py-1 rounded-lg bg-orange-100 text-barnTerra">PENDIENTE</span>
+                    </div>
 
-          <div>
-            <label for="select-fault-rancho" class="block text-xs font-bold text-stone-700 mb-1">Rancho donde se encuentra la unidad</label>
-            <select id="select-fault-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-800">
+                    <div>
+                        <label for="select-fault-rancho" class="block text-xs font-bold text-stone-700 mb-1">Rancho donde se encuentra la unidad</label>
+                        <select id="select-fault-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-800">
               <option value="EDEN">El Edén</option>
               <option value="MATANUZKA">Matanuzka</option>
               <option value="ESPERANZA">La Esperanza</option>
               <option value="ARADOS">Arados</option>
             </select>
-          </div>
+                    </div>
 
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1.5">Prioridad *</label>
-            <div class="grid grid-cols-2 gap-2.5">
-              <button type="button" id="prio-normal" onclick="setPriority('NORMAL')" class="py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition">NORMAL</button>
-              <button type="button" id="prio-urgente" onclick="setPriority('URGENTE')" class="py-2.5 px-3 rounded-xl border-2 border-red-600 bg-red-50 text-red-700 font-extrabold text-xs transition">● URGENTE / PARO</button>
-            </div>
-          </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1.5">Prioridad *</label>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button type="button" id="prio-normal" onclick="setPriority('NORMAL')" class="py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition">NORMAL</button>
+                            <button type="button" id="prio-urgente" onclick="setPriority('URGENTE')" class="py-2.5 px-3 rounded-xl border-2 border-red-600 bg-red-50 text-red-700 font-extrabold text-xs transition">● URGENTE / PARO</button>
+                        </div>
+                    </div>
 
-          <div>
-            <label for="input-fault-desc" class="block text-xs font-bold text-stone-700 mb-1">Descripción de la Falla *</label>
-            <textarea id="input-fault-desc" rows="3" placeholder="Ej. Fuga en manguera hidráulica o fallo de encendido..."
-              class="w-full bg-creamSand border border-stone-300 focus:border-barnTerra focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
-          </div>
+                    <div>
+                        <label for="input-fault-desc" class="block text-xs font-bold text-stone-700 mb-1">Descripción de la Falla *</label>
+                        <textarea id="input-fault-desc" rows="3" placeholder="Ej. Fuga en manguera hidráulica o fallo de encendido..." class="w-full bg-creamSand border border-stone-300 focus:border-barnTerra focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
+                    </div>
 
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1.5">Evidencia Fotográfica Inicial</label>
-            <div id="role2-photo-grid" class="grid grid-cols-3 gap-2">
-              <label class="aspect-square rounded-xl border-2 border-dashed border-barnTerra/60 bg-orange-50/50 hover:bg-orange-50 flex flex-col items-center justify-center cursor-pointer text-barnTerra p-2 text-center">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1.5">Evidencia Fotográfica Inicial</label>
+                        <div id="role2-photo-grid" class="grid grid-cols-3 gap-2">
+                            <label class="aspect-square rounded-xl border-2 border-dashed border-barnTerra/60 bg-orange-50/50 hover:bg-orange-50 flex flex-col items-center justify-center cursor-pointer text-barnTerra p-2 text-center">
                 <span class="text-lg">📷</span>
                 <span class="text-[10px] font-bold mt-1 leading-tight">Tomar / Subir Foto</span>
                 <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'role2')" />
               </label>
-            </div>
-          </div>
+                        </div>
+                    </div>
 
-          <button id="btn-submit-fault" type="button" onclick="submitMaintenanceRequest()" class="w-full py-4 rounded-2xl bg-barnTerra hover:bg-red-900 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
+                    <button id="btn-submit-fault" type="button" onclick="submitMaintenanceRequest()" class="w-full py-4 rounded-2xl bg-barnTerra hover:bg-red-900 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
             ENVIAR PETICIÓN AL TALLER
           </button>
-        </div>
+                </div>
 
-        <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-2">
-          <h4 class="text-xs font-extrabold uppercase tracking-wider text-stone-700">Mis Peticiones Enviadas</h4>
-          <div id="role2-my-tickets-list" class="space-y-2"></div>
-        </div>
-      </section>
+                <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-2">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-stone-700">Mis Peticiones Enviadas</h4>
+                    <div id="role2-my-tickets-list" class="space-y-2"></div>
+                </div>
+            </section>
 
-      <!-- 6. TALLER / REPARACIÓN -->
-      <section id="screen-workshop" class="hidden space-y-3.5">
-        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emeraldAgro">Bandeja de Taller</span>
-              <h2 class="text-base font-extrabold text-stone-900">Peticiones Pendientes por Reparar</h2>
-            </div>
-            <span id="role3-open-badge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-forest">0 abiertas</span>
-          </div>
-        </div>
+            <!-- 6. TALLER / REPARACIÓN -->
+            <section id="screen-workshop" class="hidden space-y-3.5">
+                <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider text-emeraldAgro">Bandeja de Taller</span>
+                            <h2 class="text-base font-extrabold text-stone-900">Peticiones Pendientes por Reparar</h2>
+                        </div>
+                        <span id="role3-open-badge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-forest">0 abiertas</span>
+                    </div>
+                </div>
 
-        <div id="role3-tickets-list" class="space-y-2.5"></div>
+                <div id="role3-tickets-list" class="space-y-2.5"></div>
 
-        <div id="role3-close-panel" class="hidden bg-white rounded-2xl p-4 border-2 border-emeraldAgro shadow-md space-y-4">
-          <div class="flex items-start justify-between gap-2 border-b border-stone-100 pb-2.5">
-            <div>
-              <span id="close-ticket-badge" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-100 text-barnTerra">TICKET #1</span>
-              <h3 id="close-ticket-tractor" class="font-extrabold text-forest text-base mt-1">#TRC-001</h3>
-              <p id="close-ticket-fault" class="text-xs text-stone-600 mt-0.5">Falla...</p>
-            </div>
-            <button type="button" onclick="closeRole3Panel()" class="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1">✕</button>
-          </div>
+                <div id="role3-close-panel" class="hidden bg-white rounded-2xl p-4 border-2 border-emeraldAgro shadow-md space-y-4">
+                    <div class="flex items-start justify-between gap-2 border-b border-stone-100 pb-2.5">
+                        <div>
+                            <span id="close-ticket-badge" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-100 text-barnTerra">TICKET #1</span>
+                            <h3 id="close-ticket-tractor" class="font-extrabold text-forest text-base mt-1">#TRC-001</h3>
+                            <p id="close-ticket-fault" class="text-xs text-stone-600 mt-0.5">Falla...</p>
+                        </div>
+                        <button type="button" onclick="closeRole3Panel()" class="text-xs font-bold text-stone-400 hover:text-stone-700 px-2 py-1">✕</button>
+                    </div>
 
-          <div id="close-ticket-initial-photos" class="hidden">
-            <span class="block text-[11px] font-bold text-stone-500 mb-1">Evidencia inicial reportada:</span>
-            <div id="close-initial-photos-row" class="flex gap-2 overflow-x-auto no-scrollbar"></div>
-          </div>
+                    <div id="close-ticket-initial-photos" class="hidden">
+                        <span class="block text-[11px] font-bold text-stone-500 mb-1">Evidencia inicial reportada:</span>
+                        <div id="close-initial-photos-row" class="flex gap-2 overflow-x-auto no-scrollbar"></div>
+                    </div>
 
-          <div>
-            <label for="input-repair-work" class="block text-xs font-bold text-stone-700 mb-1">Trabajo de Reparación Realizado *</label>
-            <textarea id="input-repair-work" rows="3" placeholder="Describe la reparación realizada o piezas cambiadas..."
-              class="w-full bg-creamSand border border-stone-300 focus:border-emeraldAgro focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
-          </div>
+                    <div>
+                        <label for="input-repair-work" class="block text-xs font-bold text-stone-700 mb-1">Trabajo de Reparación Realizado *</label>
+                        <textarea id="input-repair-work" rows="3" placeholder="Describe la reparación realizada o piezas cambiadas..." class="w-full bg-creamSand border border-stone-300 focus:border-emeraldAgro focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
+                    </div>
 
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1.5">Evidencia de Reparación Terminada</label>
-            <div id="role3-photo-grid" class="grid grid-cols-3 gap-2">
-              <label class="aspect-square rounded-xl border-2 border-dashed border-emeraldAgro/60 bg-emerald-50/50 hover:bg-emerald-50 flex flex-col items-center justify-center cursor-pointer text-emeraldAgro p-2 text-center">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1.5">Evidencia de Reparación Terminada</label>
+                        <div id="role3-photo-grid" class="grid grid-cols-3 gap-2">
+                            <label class="aspect-square rounded-xl border-2 border-dashed border-emeraldAgro/60 bg-emerald-50/50 hover:bg-emerald-50 flex flex-col items-center justify-center cursor-pointer text-emeraldAgro p-2 text-center">
                 <span class="text-lg">📷</span>
                 <span class="text-[10px] font-bold mt-1 leading-tight">Foto Reparación</span>
                 <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'role3')" />
               </label>
-            </div>
-          </div>
+                        </div>
+                    </div>
 
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1.5">Estatus del Servicio</label>
-            <div class="grid grid-cols-2 gap-2.5">
-              <button type="button" id="status-btn-finalizado" onclick="setResolutionStatus('FINALIZADO')" class="py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1.5">Estatus del Servicio</label>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button type="button" id="status-btn-finalizado" onclick="setResolutionStatus('FINALIZADO')" class="py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center">
                 ✔ FINALIZADO<br><span class="text-[10px] font-normal">Tractor operativo</span>
               </button>
-              <button type="button" id="status-btn-espera" onclick="setResolutionStatus('EN_ESPERA')" class="py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center">
+                            <button type="button" id="status-btn-espera" onclick="setResolutionStatus('EN_ESPERA')" class="py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center">
                 ⏳ EN ESPERA<br><span class="text-[10px] font-normal">Refacción / Taller ext.</span>
               </button>
-            </div>
-          </div>
+                        </div>
+                    </div>
 
-          <div id="wait-reason-box" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3">
-            <label for="select-wait-reason" class="block text-xs font-bold text-amber-900 mb-1">Motivo de espera:</label>
-            <select id="select-wait-reason" class="w-full bg-white border border-amber-300 rounded-lg py-2 px-2.5 text-xs font-semibold text-stone-800">
+                    <div id="wait-reason-box" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3">
+                        <label for="select-wait-reason" class="block text-xs font-bold text-amber-900 mb-1">Motivo de espera:</label>
+                        <select id="select-wait-reason" class="w-full bg-white border border-amber-300 rounded-lg py-2 px-2.5 text-xs font-semibold text-stone-800">
               <option value="Compra de refacción">Compra de refacción</option>
               <option value="Envío a taller externo">Envío a taller externo</option>
               <option value="Esperando autorización">Esperando autorización</option>
             </select>
-          </div>
+                    </div>
 
-          <button id="btn-save-repair" type="button" onclick="submitRepairClosure()" class="w-full py-4 rounded-2xl bg-emeraldAgro hover:bg-forest active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
+                    <button id="btn-save-repair" type="button" onclick="submitRepairClosure()" class="w-full py-4 rounded-2xl bg-emeraldAgro hover:bg-forest active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
             CONFIRMAR Y GUARDAR SERVICIO
           </button>
-        </div>
-      </section>
+                </div>
+            </section>
 
-      <!-- 7. BITÁCORA E HISTORIAL -->
-      <section id="screen-history" class="hidden space-y-4">
-        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <span id="history-area-tag" class="text-[11px] font-extrabold uppercase tracking-wider text-forest">Bitácora</span>
-              <h2 id="history-area-title" class="text-base font-extrabold text-stone-900">Historial en Tiempo Real</h2>
-            </div>
-            <button type="button" onclick="exportDataCSV()" class="px-3 py-1.5 rounded-xl bg-forest text-white text-xs font-bold hover:bg-emeraldAgro transition shadow-sm">⬇ CSV</button>
-          </div>
+            <!-- 7. BITÁCORA E HISTORIAL -->
+            <section id="screen-history" class="hidden space-y-4">
+                <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span id="history-area-tag" class="text-[11px] font-extrabold uppercase tracking-wider text-forest">Bitácora</span>
+                            <h2 id="history-area-title" class="text-base font-extrabold text-stone-900">Historial en Tiempo Real</h2>
+                        </div>
+                        <button type="button" onclick="exportDataCSV()" class="px-3 py-1.5 rounded-xl bg-forest text-white text-xs font-bold hover:bg-emeraldAgro transition shadow-sm">⬇ CSV</button>
+                    </div>
 
-          <div id="admin-history-filters" class="hidden space-y-2 pt-2 border-t border-stone-100">
-            <div class="grid grid-cols-2 gap-2">
-              <select id="filter-history-tab" onchange="renderHistoryScreen()" class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800">
+                    <div id="admin-history-filters" class="hidden space-y-2 pt-2 border-t border-stone-100">
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="filter-history-tab" onchange="renderHistoryScreen()" class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800">
                 <option value="DIESEL">Ver Cargas de Diésel</option>
                 <option value="MNT">Ver Mantenimientos</option>
               </select>
-              <select id="filter-history-ranch" onchange="renderHistoryScreen()" class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800">
+                            <select id="filter-history-ranch" onchange="renderHistoryScreen()" class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800">
                 <option value="TODOS">Todos los Ranchos</option>
                 <option value="EDEN">El Edén</option>
                 <option value="MATANUZKA">Matanuzka</option>
                 <option value="ESPERANZA">La Esperanza</option>
                 <option value="ARADOS">Arados</option>
               </select>
+                        </div>
+                    </div>
+
+                    <div id="history-kpi-grid" class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100 text-center"></div>
+                </div>
+
+                <div id="history-records-list" class="space-y-2.5"></div>
+            </section>
+
+        </main>
+
+        <!-- MODAL 1: CONFIRMACIÓN PREVIA AL GUARDAR DIÉSEL -->
+        <div id="modal-confirm-fuel" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 border-2 border-harvestGold shadow-2xl space-y-4">
+                <div class="flex items-center gap-2.5 border-b border-stone-100 pb-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-harvestGold flex items-center justify-center text-xl shrink-0">⛽</div>
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-harvestGold">Verifica antes de guardar</span>
+                        <h3 class="text-base font-extrabold text-forest leading-tight">¿Los datos son correctos?</h3>
+                    </div>
+                </div>
+
+                <div class="bg-creamSand rounded-2xl p-3.5 border border-stone-200 space-y-2 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-stone-500 font-semibold">Tractor:</span>
+                        <strong id="conf-fuel-tractor" class="text-forest font-extrabold">#TRC-001</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-500 font-semibold">Rancho de carga:</span>
+                        <strong id="conf-fuel-rancho" class="text-stone-800 font-bold">El Edén</strong>
+                    </div>
+                    <div class="flex justify-between items-center pt-1 border-t border-stone-200">
+                        <span class="text-stone-500 font-semibold">Litros a registrar:</span>
+                        <strong id="conf-fuel-liters" class="text-lg font-black text-harvestGold">0.0 L</strong>
+                    </div>
+                    <div class="pt-1 border-t border-stone-200">
+                        <span class="block text-stone-500 font-semibold mb-0.5">Actividad:</span>
+                        <strong id="conf-fuel-activity" class="text-forest font-bold block leading-snug">—</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-stone-500 font-semibold">Horómetro:</span>
+                        <strong id="conf-fuel-horo" class="text-stone-700 font-bold">No registrado</strong>
+                    </div>
+                </div>
+
+                <div id="conf-fuel-cross-warn" class="hidden bg-amber-100 border border-amber-400 rounded-xl p-2.5 text-[11px] font-bold text-barnTerra"></div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button type="button" onclick="closeFuelConfirmModal()" class="py-3 px-3 rounded-xl bg-sandCard hover:bg-stone-200 text-stone-800 font-extrabold text-xs border border-stone-300">✏️ Corregir</button>
+                    <button id="btn-confirm-fuel-final" type="button" onclick="confirmAndSaveFuelLoad()" class="py-3 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-md">✔ Sí, Guardar</button>
+                </div>
             </div>
-          </div>
-
-          <div id="history-kpi-grid" class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100 text-center"></div>
         </div>
 
-        <div id="history-records-list" class="space-y-2.5"></div>
-      </section>
+        <!-- MODAL 2: EDICIÓN EXCLUSIVA ADMIN -->
+        <div id="modal-admin-edit" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 border-2 border-forest shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emeraldAgro">Control Administrador</span>
+                        <h3 id="admin-edit-title" class="text-base font-extrabold text-forest">Editar Registro</h3>
+                    </div>
+                    <button type="button" onclick="closeAdminEditModal()" class="text-stone-400 hover:text-stone-700 font-bold px-2 py-1">✕</button>
+                </div>
 
-    </main>
-
-    <!-- MODAL 1: CONFIRMACIÓN PREVIA AL GUARDAR DIÉSEL -->
-    <div id="modal-confirm-fuel" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-4">
-      <div class="bg-white w-full max-w-sm rounded-3xl p-5 border-2 border-harvestGold shadow-2xl space-y-4">
-        <div class="flex items-center gap-2.5 border-b border-stone-100 pb-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-100 text-harvestGold flex items-center justify-center text-xl shrink-0">⛽</div>
-          <div>
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-harvestGold">Verifica antes de guardar</span>
-            <h3 class="text-base font-extrabold text-forest leading-tight">¿Los datos son correctos?</h3>
-          </div>
-        </div>
-
-        <div class="bg-creamSand rounded-2xl p-3.5 border border-stone-200 space-y-2 text-xs">
-          <div class="flex justify-between">
-            <span class="text-stone-500 font-semibold">Tractor:</span>
-            <strong id="conf-fuel-tractor" class="text-forest font-extrabold">#TRC-001</strong>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-stone-500 font-semibold">Rancho de carga:</span>
-            <strong id="conf-fuel-rancho" class="text-stone-800 font-bold">El Edén</strong>
-          </div>
-          <div class="flex justify-between items-center pt-1 border-t border-stone-200">
-            <span class="text-stone-500 font-semibold">Litros a registrar:</span>
-            <strong id="conf-fuel-liters" class="text-lg font-black text-harvestGold">0.0 L</strong>
-          </div>
-          <div class="pt-1 border-t border-stone-200">
-            <span class="block text-stone-500 font-semibold mb-0.5">Actividad:</span>
-            <strong id="conf-fuel-activity" class="text-forest font-bold block leading-snug">—</strong>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-stone-500 font-semibold">Horómetro:</span>
-            <strong id="conf-fuel-horo" class="text-stone-700 font-bold">No registrado</strong>
-          </div>
-        </div>
-
-        <div id="conf-fuel-cross-warn" class="hidden bg-amber-100 border border-amber-400 rounded-xl p-2.5 text-[11px] font-bold text-barnTerra"></div>
-
-        <div class="grid grid-cols-2 gap-2.5 pt-1">
-          <button type="button" onclick="closeFuelConfirmModal()" class="py-3 px-3 rounded-xl bg-sandCard hover:bg-stone-200 text-stone-800 font-extrabold text-xs border border-stone-300">✏️ Corregir</button>
-          <button id="btn-confirm-fuel-final" type="button" onclick="confirmAndSaveFuelLoad()" class="py-3 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-md">✔ Sí, Guardar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 2: EDICIÓN EXCLUSIVA ADMIN -->
-    <div id="modal-admin-edit" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-4">
-      <div class="bg-white w-full max-w-sm rounded-3xl p-5 border-2 border-forest shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
-          <div>
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emeraldAgro">Control Administrador</span>
-            <h3 id="admin-edit-title" class="text-base font-extrabold text-forest">Editar Registro</h3>
-          </div>
-          <button type="button" onclick="closeAdminEditModal()" class="text-stone-400 hover:text-stone-700 font-bold px-2 py-1">✕</button>
-        </div>
-
-        <div id="admin-edit-diesel-fields" class="hidden space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Tractor</label>
-            <select id="edit-fuel-tractor" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Rancho de Carga</label>
-            <select id="edit-fuel-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900">
+                <div id="admin-edit-diesel-fields" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Tractor</label>
+                        <select id="edit-fuel-tractor" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Rancho de Carga</label>
+                        <select id="edit-fuel-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900">
               <option value="EDEN">El Edén</option>
               <option value="MATANUZKA">Matanuzka</option>
               <option value="ESPERANZA">La Esperanza</option>
               <option value="ARADOS">Arados</option>
             </select>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-bold text-stone-700 mb-1">Litros *</label>
-              <input id="edit-fuel-liters" type="number" step="0.1" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-sm font-extrabold text-stone-900" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-stone-700 mb-1">Horómetro</label>
-              <input id="edit-fuel-horo" type="number" step="0.1" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-sm font-bold text-stone-900" />
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Actividad *</label>
-            <select id="edit-fuel-activity" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
-          </div>
-        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Litros *</label>
+                            <input id="edit-fuel-liters" type="number" step="0.1" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-sm font-extrabold text-stone-900" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Horómetro</label>
+                            <input id="edit-fuel-horo" type="number" step="0.1" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-sm font-bold text-stone-900" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Actividad *</label>
+                        <select id="edit-fuel-activity" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
+                    </div>
+                </div>
 
-        <div id="admin-edit-mnt-fields" class="hidden space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Tractor</label>
-            <select id="edit-mnt-tractor" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Reporte</label>
-              <select id="edit-mnt-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
+                <div id="admin-edit-mnt-fields" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Tractor</label>
+                        <select id="edit-mnt-tractor" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Reporte</label>
+                            <select id="edit-mnt-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
                 <option value="EDEN">El Edén</option>
                 <option value="MATANUZKA">Matanuzka</option>
                 <option value="ESPERANZA">La Esperanza</option>
                 <option value="ARADOS">Arados</option>
               </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-stone-700 mb-1">Prioridad</label>
-              <select id="edit-mnt-prio" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Prioridad</label>
+                            <select id="edit-mnt-prio" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
                 <option value="NORMAL">NORMAL</option>
                 <option value="URGENTE">URGENTE</option>
               </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Descripción de Falla *</label>
+                        <textarea id="edit-mnt-desc" rows="2" class="w-full bg-creamSand border border-stone-300 rounded-xl p-2.5 text-xs font-semibold text-stone-900"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Trabajo Realizado (Taller)</label>
+                        <textarea id="edit-mnt-work" rows="2" class="w-full bg-creamSand border border-stone-300 rounded-xl p-2.5 text-xs font-semibold text-stone-900"></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-2">
+                    <button type="button" onclick="closeAdminEditModal()" class="py-3 px-3 rounded-xl bg-sandCard text-stone-700 font-bold text-xs border border-stone-300">Cancelar</button>
+                    <button id="btn-admin-save-edit" type="button" onclick="saveAdminRecordEdit()" class="py-3 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-md">💾 Guardar Cambios</button>
+                </div>
             </div>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Descripción de Falla *</label>
-            <textarea id="edit-mnt-desc" rows="2" class="w-full bg-creamSand border border-stone-300 rounded-xl p-2.5 text-xs font-semibold text-stone-900"></textarea>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-stone-700 mb-1">Trabajo Realizado (Taller)</label>
-            <textarea id="edit-mnt-work" rows="2" class="w-full bg-creamSand border border-stone-300 rounded-xl p-2.5 text-xs font-semibold text-stone-900"></textarea>
-          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2.5 pt-2">
-          <button type="button" onclick="closeAdminEditModal()" class="py-3 px-3 rounded-xl bg-sandCard text-stone-700 font-bold text-xs border border-stone-300">Cancelar</button>
-          <button id="btn-admin-save-edit" type="button" onclick="saveAdminRecordEdit()" class="py-3 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-md">💾 Guardar Cambios</button>
+        <!-- MODAL 3: EDICIÓN DE TRACTOR EXCLUSIVA ADMIN -->
+        <div id="modal-admin-edit-tractor" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 border-2 border-forest shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emeraldAgro">Control Administrador</span>
+                        <h3 id="admin-edit-trc-title" class="text-base font-extrabold text-forest">Editar Tractor</h3>
+                    </div>
+                    <button type="button" onclick="closeAdminEditTractorModal()" class="text-stone-400 hover:text-stone-700 font-bold px-2 py-1">✕</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Marca y Modelo *</label>
+                        <input id="edit-trc-model" type="text" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-sm font-bold text-stone-900" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Base *</label>
+                            <select id="edit-trc-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
+                <option value="EDEN">El Edén</option>
+                <option value="MATANUZKA">Matanuzka</option>
+                <option value="ESPERANZA">La Esperanza</option>
+                <option value="ARADOS">Arados</option>
+              </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Estatus</label>
+                            <select id="edit-trc-status" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
+                <option value="ACTIVO">ACTIVO</option>
+                <option value="EN_TALLER">EN_TALLER</option>
+                <option value="BAJA">BAJA</option>
+              </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">No. de Serie</label>
+                            <input id="edit-trc-serial" type="text" class="w-full uppercase bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-700 mb-1">Tanque (Litros)</label>
+                            <input id="edit-trc-tank" type="number" step="1" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-2">
+                    <button type="button" onclick="closeAdminEditTractorModal()" class="py-3 px-3 rounded-xl bg-sandCard text-stone-700 font-bold text-xs border border-stone-300">Cancelar</button>
+                    <button id="btn-admin-save-trc" type="button" onclick="saveAdminTractorEdit()" class="py-3 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-md">💾 Guardar</button>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- BARRA INFERIOR DINÁMICA -->
+        <nav id="bottom-nav" class="hidden bg-white border-t border-stone-200 px-1.5 py-2 flex items-center justify-around z-20 absolute bottom-0 inset-x-0"></nav>
     </div>
 
-    <!-- BARRA INFERIOR DINÁMICA -->
-    <nav id="bottom-nav" class="hidden bg-white border-t border-stone-200 px-1.5 py-2 flex items-center justify-around z-20 absolute bottom-0 inset-x-0"></nav>
-  </div>
-
-  <!-- Punto de entrada modular ES6 -->
-  <script type="module" src="js/app.js"></script>
+    <!-- Punto de entrada modular ES6 -->
+    <script type="module" src="js/app.js"></script>
 </body>
+
 </html>
