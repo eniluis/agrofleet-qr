@@ -3,1198 +3,1126 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#1B3B22" />
+  <meta name="theme-color" content="#1e4620" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>AgroFleet QR — Gestión de Maquinaria</title>
+  <title>AgroFleet QR — Diésel y Mantenimiento</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root {
-      --primary: #1B3B22;
-      --primary-light: #2D5A36;
-      --primary-soft: #EBF3ED;
-      --accent: #D98A1B;
-      --accent-soft: #FDF5E6;
-      --danger: #C04A2A;
-      --danger-soft: #FCECE8;
-      --bg: #F4F2EC;
-      --surface: #FFFFFF;
-      --text: #1A241D;
-      --text-muted: #5C6B60;
-      --border: #DCE2DC;
-      --radius: 16px;
-      --shadow: 0 6px 20px rgba(27, 59, 34, 0.08);
+      --verde-oscuro: #1e4620;
+      --verde-campo: #2e6f32;
+      --verde-claro: #e9f3ea;
+      --dorado: #c88a1e;
+      --dorado-claro: #fdf4e3;
+      --terracota: #b84a27;
+      --terracota-claro: #fbeae5;
+      --arena: #f7f5f0;
+      --blanco: #ffffff;
+      --texto: #1f2922;
+      --gris: #5f6c62;
+      --borde: #dce2dc;
+      --sombra: 0 4px 14px rgba(30, 70, 32, 0.08);
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 90px; }
-
-    /* HEADER ESTILO AGRO-INDUSTRIAL ORIGINAL */
-    .topbar {
-      background: linear-gradient(135deg, #152E1B 0%, #244D2D 100%);
-      color: #fff;
-      padding: 14px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--arena); color: var(--texto); min-height: 100vh; padding-bottom: 84px; }
+    header {
+      background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-campo));
+      color: var(--blanco); padding: 14px 16px; position: sticky; top: 0; z-index: 50;
+      display: flex; justify-content: space-between; align-items: center; box-shadow: var(--sombra);
     }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-logo {
-      width: 42px; height: 42px; border-radius: 12px;
-      background: linear-gradient(135deg, #E59B28, #B87210);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px; background: var(--dorado);
+      display: grid; place-items: center; font-weight: 800; font-size: 16px; color: #fff;
     }
-    .brand-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
-    .brand-sub { font-size: 11px; color: #C2D6C6; display: block; margin-top: 1px; }
-
-    .topbar-right { display: flex; align-items: center; gap: 8px; }
-    .net-badge {
-      display: flex; align-items: center; gap: 6px;
-      background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);
-      padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    .brand h1 { font-size: 17px; font-weight: 700; line-height: 1.1; }
+    .brand small { font-size: 11px; opacity: 0.9; display: block; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .status-pill {
+      font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 20px;
+      background: rgba(255,255,255,0.18); display: flex; align-items: center; gap: 5px;
     }
-    .net-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 6px #4ADE80; }
-    .net-dot.off { background: #F87171; box-shadow: 0 0 6px #F87171; }
-    .btn-exit {
-      background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.25);
-      padding: 6px 11px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+    .dot.offline { background: #f87171; }
+    .btn-logout {
+      background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
     }
-
-    .wrap { max-width: 580px; margin: 0 auto; padding: 16px; }
-
-    /* TARJETAS */
+    .container { max-width: 640px; margin: 0 auto; padding: 16px; }
     .card {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow);
-      border: 1px solid rgba(27, 59, 34, 0.08);
+      background: var(--blanco); border-radius: 16px; padding: 18px;
+      box-shadow: var(--sombra); border: 1px solid var(--borde); margin-bottom: 16px;
     }
-    .card-head {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    .card-title { font-size: 16px; font-weight: 700; color: var(--verde-oscuro); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--gris); margin-bottom: 5px; margin-top: 12px; }
+    input, select, textarea {
+      width: 100%; padding: 12px; border: 1.5px solid var(--borde); border-radius: 10px;
+      font-size: 15px; background: #fff; color: var(--texto); outline: none;
     }
-    .card-head h2 { font-size: 16px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-
-    /* FORMULARIOS */
-    .field { margin-bottom: 14px; }
-    .field label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
-    .input, .select, .textarea {
-      width: 100%; padding: 12px 14px; border-radius: 12px;
-      border: 1.5px solid var(--border); background: #FAFBF9;
-      font-size: 15px; color: var(--text); transition: all 0.2s;
-    }
-    .input:focus, .select:focus, .textarea:focus {
-      outline: none; border-color: var(--primary-light); background: #fff;
-      box-shadow: 0 0 0 3px rgba(45, 90, 54, 0.12);
-    }
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    /* BOTONES */
+    input:focus, select:focus, textarea:focus { border-color: var(--verde-campo); }
     .btn {
-      width: 100%; padding: 14px 16px; border-radius: 12px; border: none;
-      font-size: 15px; font-weight: 800; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: transform 0.12s, opacity 0.2s;
+      width: 100%; padding: 13px 16px; border: none; border-radius: 12px; font-size: 15px;
+      font-weight: 700; cursor: pointer; margin-top: 14px; display: flex; align-items: center;
+      justify-content: center; gap: 8px; transition: transform 0.1s ease;
     }
     .btn:active { transform: scale(0.98); }
-    .btn-green { background: linear-gradient(135deg, #1B3B22, #2D5A36); color: #fff; box-shadow: 0 4px 12px rgba(27, 59, 34, 0.25); }
-    .btn-amber { background: linear-gradient(135deg, #D98A1B, #B87210); color: #fff; box-shadow: 0 4px 12px rgba(217, 138, 27, 0.25); }
-    .btn-red { background: linear-gradient(135deg, #C04A2A, #9E381C); color: #fff; box-shadow: 0 4px 12px rgba(192, 74, 42, 0.25); }
-    .btn-soft { background: var(--primary-soft); color: var(--primary); border: 1px solid #C5D9C9; }
-    .btn-mini { width: auto; padding: 8px 12px; font-size: 12px; border-radius: 10px; }
-
-    /* LOGIN */
-    .login-card { max-width: 410px; margin: 34px auto; text-align: center; }
-    .login-emblem {
-      width: 68px; height: 68px; border-radius: 20px; margin: 0 auto 14px;
-      background: linear-gradient(135deg, #1B3B22, #2D5A36); color: #E59B28;
-      display: flex; align-items: center; justify-content: center; font-size: 34px;
-      box-shadow: 0 8px 20px rgba(27, 59, 34, 0.2);
-    }
-    .login-card .field { text-align: left; }
-
-    /* PÍLDORAS Y ALERTAS */
-    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
-    .pill-green { background: var(--primary-soft); color: var(--primary); }
-    .pill-amber { background: var(--accent-soft); color: #9A5E08; }
-    .pill-red { background: var(--danger-soft); color: var(--danger); }
-
-    .notice { padding: 12px 14px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-top: 12px; }
-    .notice-green { background: var(--primary-soft); color: var(--primary); border: 1px solid #B8D4BE; }
-    .notice-amber { background: var(--accent-soft); color: #8A5205; border: 1px solid #F0CE8E; }
-    .notice-red { background: var(--danger-soft); color: var(--danger); border: 1px solid #EAB5A7; }
-
-    /* LISTAS */
-    .item-box {
-      border: 1px solid var(--border); border-radius: 14px; padding: 14px;
-      margin-bottom: 10px; background: #FCFDFB;
-    }
-    .item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
-    .item-title { font-weight: 800; font-size: 15px; color: var(--text); }
-    .item-meta { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
-
-    /* ETIQUETA QR */
-    .qr-ticket {
-      margin-top: 16px; padding: 18px; border-radius: 16px;
-      border: 2px dashed var(--primary); background: #fff; text-align: center;
-    }
-    .qr-ticket h3 { font-size: 28px; font-weight: 900; color: var(--primary); letter-spacing: 1px; margin-top: 6px; }
-    .qr-btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
-
-    /* KPI GRID */
-    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .kpi-card { background: var(--primary-soft); padding: 14px; border-radius: 14px; text-align: center; }
-    .kpi-card .num { font-size: 22px; font-weight: 900; color: var(--primary); display: block; }
-    .kpi-card .lbl { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-
-    /* BOTTOM TAB BAR */
-    .tabbar {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: #fff; border-top: 1px solid var(--border);
-      display: flex; justify-content: space-around; padding: 8px 6px;
-      z-index: 100; box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
-    }
-    .tab-btn {
-      background: none; border: none; color: var(--text-muted);
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      font-size: 11px; font-weight: 700; cursor: pointer; padding: 4px 10px; border-radius: 10px;
-    }
-    .tab-btn.active { color: var(--primary); background: var(--primary-soft); }
-    .tab-btn .icon { font-size: 19px; }
-
+    .btn-primary { background: var(--verde-campo); color: #fff; }
+    .btn-gold { background: var(--dorado); color: #fff; }
+    .btn-terra { background: var(--terracota); color: #fff; }
+    .btn-outline { background: var(--verde-claro); color: var(--verde-oscuro); border: 1px solid #bfd7c1; }
+    .btn-sm { padding: 8px 12px; font-size: 13px; margin-top: 8px; width: auto; }
     .hidden { display: none !important; }
-    #qr-reader-diesel, #qr-reader-mnt { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+    .login-box { max-width: 400px; margin: 36px auto; }
+    .badge {
+      display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .badge-green { background: var(--verde-claro); color: var(--verde-oscuro); }
+    .badge-gold { background: var(--dorado-claro); color: #8a5b0c; }
+    .badge-terra { background: var(--terracota-claro); color: var(--terracota); }
+    .alert {
+      padding: 12px; border-radius: 10px; font-size: 13px; margin-top: 12px; font-weight: 600;
+    }
+    .alert-cross { background: var(--dorado-claro); border: 1px solid #ecc67b; color: #7a4e06; }
+    .alert-info { background: var(--verde-claro); border: 1px solid #b8d8ba; color: var(--verde-oscuro); }
+    .alert-err { background: var(--terracota-claro); border: 1px solid #e6a997; color: #8e3215; }
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; background: var(--blanco);
+      border-top: 1px solid var(--borde); display: flex; justify-content: space-around;
+      padding: 8px 4px; z-index: 60; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .nav-btn {
+      background: none; border: none; color: var(--gris); font-size: 11px; font-weight: 700;
+      display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 8px;
+    }
+    .nav-btn.active { color: var(--verde-oscuro); }
+    .nav-btn span.ico { font-size: 18px; }
+    .list-item {
+      border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin-bottom: 10px; background: #fcfdfc;
+    }
+    .list-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .qr-label-card {
+      border: 2px dashed var(--verde-oscuro); border-radius: 14px; padding: 16px;
+      text-align: center; background: #fff; margin-top: 14px;
+    }
+    .qr-label-card h2 { font-size: 26px; color: var(--verde-oscuro); letter-spacing: 1px; margin-top: 6px; }
+    .qr-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+    #qr-reader { width: 100%; border-radius: 12px; overflow: hidden; margin-top: 10px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-box { background: var(--verde-claro); padding: 12px; border-radius: 12px; text-align: center; }
+    .stat-box strong { font-size: 20px; color: var(--verde-oscuro); display: block; }
+    .stat-box small { font-size: 11px; color: var(--gris); font-weight: 600; }
+    img.preview-thumb { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; margin-top: 8px; }
 
-    /* IMPRESIÓN LIMPIA DE ETIQUETA QR */
+    /* ESTILOS EXCLUSIVOS PARA IMPRESIÓN DIRECTA */
     @media print {
       body * { visibility: hidden; }
-      #qr-ticket-box, #qr-ticket-box * { visibility: visible; }
-      #qr-ticket-box {
-        position: fixed; left: 50%; top: 36px; transform: translateX(-50%);
-        width: 310px; border: 3px solid #1B3B22; border-radius: 14px; padding: 20px;
+      #qr-output-box, #qr-output-box * { visibility: visible; }
+      #qr-output-box {
+        position: fixed; left: 50%; top: 40px; transform: translateX(-50%);
+        width: 300px; border: 3px solid #000; border-radius: 12px; padding: 20px;
+        box-shadow: none; margin: 0;
       }
-      .qr-btn-group { display: none !important; }
+      .qr-actions { display: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <!-- BARRA SUPERIOR -->
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-logo">🚜</div>
+<header>
+  <div class="brand">
+    <div class="brand-icon">QR</div>
+    <div>
+      <h1>AgroFleet QR</h1>
+      <small id="header-sub">Control de Diésel y Mantenimiento</small>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="status-pill" id="conn-pill">
+      <span class="dot" id="conn-dot"></span>
+      <span id="conn-text">En línea</span>
+    </div>
+    <button class="btn-logout hidden" id="btn-logout" onclick="logout()">Salir</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- PANTALLA DE LOGIN -->
+  <div id="view-login" class="card login-box">
+    <div class="card-title">Iniciar Sesión</div>
+    <p style="font-size:13px; color:var(--gris); margin-bottom:8px;">
+      Ingresa con tu usuario asignado y PIN de acceso.
+    </p>
+    <label for="login-user">Usuario / ID</label>
+    <input type="text" id="login-user" placeholder="Ej. diesel_matanuzka" autocomplete="username" />
+
+    <label for="login-pin">PIN</label>
+    <input type="password" id="login-pin" inputmode="numeric" maxlength="10" placeholder="••••" autocomplete="current-password" />
+
+    <button class="btn btn-primary" onclick="login()">Entrar al Sistema</button>
+    <button class="btn btn-outline hidden" id="btn-install-pwa" onclick="installPWA()">📲 Instalar App en Teléfono</button>
+    <div id="login-error" class="alert alert-err hidden"></div>
+  </div>
+
+  <!-- APP PRINCIPAL -->
+  <div id="app-shell" class="hidden">
+
+    <!-- BANNER DE SESIÓN ACTIVA -->
+    <div class="card" style="padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <span class="brand-title">AgroFleet QR</span>
-        <span class="brand-sub">Control de Flota, Diésel y Taller</span>
+        <strong id="user-display-name" style="font-size:14px;">Usuario</strong>
+        <div style="font-size:12px; color:var(--gris);" id="user-display-rancho">Rancho: —</div>
       </div>
+      <span class="badge badge-green" id="user-display-role">ROL</span>
     </div>
-    <div class="topbar-right">
-      <div class="net-badge">
-        <span class="net-dot" id="net-dot"></span>
-        <span id="net-label">En línea</span>
+
+    <!-- SECCIÓN 1: CARGA DE DIÉSEL -->
+    <section id="sec-diesel" class="hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>⛽ Registro de Carga de Diésel</span>
+          <button class="btn btn-outline btn-sm" style="margin:0;" onclick="toggleScanner('diesel')">📷 Escanear QR</button>
+        </div>
+
+        <div id="qr-reader-diesel" class="hidden"></div>
+
+        <label for="diesel-tractor">Tractor (Escanea QR o selecciona)</label>
+        <select id="diesel-tractor" onchange="checkCrossRanch()"></select>
+
+        <div id="cross-ranch-alert" class="alert alert-cross hidden"></div>
+
+        <label for="diesel-rancho-carga">Rancho donde se despacha el diésel</label>
+        <select id="diesel-rancho-carga" onchange="checkCrossRanch()">
+          <option value="EDEN">El Edén</option>
+          <option value="MATANUZKA">Matanuzka</option>
+          <option value="ESPERANZA">La Esperanza</option>
+          <option value="ARADOS">Arados</option>
+        </select>
+
+        <div class="grid-2">
+          <div>
+            <label for="diesel-litros">Litros despachados *</label>
+            <input type="number" id="diesel-litros" step="0.1" min="0.1" placeholder="Ej. 85.5" />
+          </div>
+          <div>
+            <label for="diesel-horometro">Horómetro actual</label>
+            <input type="number" id="diesel-horometro" step="0.1" placeholder="Ej. 1420.5" />
+          </div>
+        </div>
+
+        <label for="diesel-actividad">Actividad que realiza el tractor *</label>
+        <select id="diesel-actividad">
+          <option value="Cosecha">Cosecha</option>
+          <option value="Establos / Alimentación">Establos / Alimentación</option>
+          <option value="Preparación de tierra / Barbecho">Preparación de tierra / Barbecho</option>
+          <option value="Siembra">Siembra</option>
+          <option value="Acarreo / Transporte">Acarreo / Transporte</option>
+          <option value="Riego / Nivelación">Riego / Nivelación</option>
+          <option value="Mantenimiento de caminos">Mantenimiento de caminos</option>
+          <option value="Otra actividad">Otra actividad</option>
+        </select>
+
+        <button class="btn btn-gold" onclick="registrarDiesel()">💾 Guardar Carga de Diésel</button>
+        <div id="diesel-msg" class="alert hidden"></div>
       </div>
-      <button class="btn-exit hidden" id="btn-logout" onclick="logout()">Salir</button>
-    </div>
-  </header>
 
-  <main class="wrap">
-
-    <!-- PANTALLA DE LOGIN -->
-    <section id="view-login" class="card login-card">
-      <div class="login-emblem">🌾</div>
-      <h2 style="font-size:20px; font-weight:800; color:var(--primary); margin-bottom:4px;">Acceso Operativo</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">
-        Ingresa con tu usuario asignado y PIN de seguridad
-      </p>
-
-      <div class="field">
-        <label for="login-user">Usuario / ID</label>
-        <input class="input" type="text" id="login-user" placeholder="Ej. diesel_matanuzka" autocomplete="username" />
+      <div class="card">
+        <div class="card-title">Últimas Cargas Registradas</div>
+        <div id="lista-diesel">Cargando historial...</div>
       </div>
-
-      <div class="field">
-        <label for="login-pin">PIN de Acceso</label>
-        <input class="input" type="password" id="login-pin" inputmode="numeric" maxlength="10" placeholder="••••" autocomplete="current-password" />
-      </div>
-
-      <button class="btn btn-green" onclick="login()">Iniciar Sesión</button>
-      <button class="btn btn-soft hidden" id="btn-install-pwa" style="margin-top:10px;" onclick="installPWA()">📲 Instalar App en Teléfono</button>
-      <div id="login-error" class="notice notice-red hidden"></div>
     </section>
 
-    <!-- CONTENIDO DE LA APP -->
-    <div id="app-shell" class="hidden">
+    <!-- SECCIÓN 2: ALTA DE TRACTORES Y GENERADOR QR (ID AUTOMÁTICO) -->
+    <section id="sec-alta-qr" class="hidden">
+      <div class="card">
+        <div class="card-title">🚜 Alta de Tractor y Etiqueta QR</div>
+        <p style="font-size:13px; color:var(--gris);">
+          El sistema asignará automáticamente un <strong>ID único e irrepetible</strong> (ej. TRC-001) al guardar la unidad y generará su QR listo para imprimir.
+        </p>
 
-      <!-- TARJETA DE USUARIO ACTIVO -->
-      <div class="card" style="padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-weight:800; font-size:15px; color:var(--primary);" id="user-display-name">Usuario</div>
-          <div style="font-size:12px; color:var(--text-muted);" id="user-display-rancho">Ubicación: —</div>
+        <label for="trc-modelo">Modelo / Marca del Tractor *</label>
+        <input type="text" id="trc-modelo" placeholder="Ej. John Deere 6110J / Kubota M5100" />
+
+        <div class="grid-2">
+          <div>
+            <label for="trc-serie">Número de Serie</label>
+            <input type="text" id="trc-serie" placeholder="Opcional" />
+          </div>
+          <div>
+            <label for="trc-tanque">Capacidad Tanque (L)</label>
+            <input type="number" id="trc-tanque" placeholder="Ej. 180" />
+          </div>
         </div>
-        <span class="pill pill-green" id="user-display-role">ROL</span>
+
+        <label for="trc-rancho">Rancho Base (Dueño del tractor) *</label>
+        <select id="trc-rancho">
+          <option value="EDEN">El Edén</option>
+          <option value="MATANUZKA">Matanuzka</option>
+          <option value="ESPERANZA">La Esperanza</option>
+          <option value="ARADOS">Arados</option>
+        </select>
+
+        <button class="btn btn-primary" onclick="registrarTractorQR()">✨ Registrar Tractor y Generar QR</button>
+        <div id="trc-msg" class="alert hidden"></div>
+
+        <!-- ETIQUETA QR GENERADA -->
+        <div id="qr-output-box" class="qr-label-card hidden">
+          <span class="badge badge-green" id="qr-lbl-rancho">RANCHO</span>
+          <canvas id="qr-canvas" style="margin:10px auto; display:block;"></canvas>
+          <h2 id="qr-lbl-id">TRC-001</h2>
+          <p id="qr-lbl-modelo" style="font-size:14px; font-weight:600; color:var(--gris);"></p>
+          <p id="qr-lbl-serie" style="font-size:11px; color:var(--gris); margin-top:2px;"></p>
+          <div class="qr-actions">
+            <button class="btn btn-primary btn-sm" style="margin:0;" onclick="imprimirEtiquetaQR()">🖨️ Imprimir Etiqueta QR</button>
+            <button class="btn btn-gold btn-sm" style="margin:0;" onclick="descargarEtiquetaQR()">⬇️ Descargar PNG</button>
+          </div>
+        </div>
       </div>
 
-      <!-- 1. MÓDULO DE DIÉSEL -->
-      <section id="sec-diesel" class="hidden">
-        <div class="card">
-          <div class="card-head">
-            <h2>⛽ Carga de Diésel</h2>
-            <button class="btn btn-soft btn-mini" onclick="toggleScanner('diesel')">📷 Escanear QR</button>
-          </div>
+      <div class="card">
+        <div class="card-title">Flota Registrada (<span id="count-tractores">0</span>)</div>
+        <div id="lista-tractores">Cargando tractores...</div>
+      </div>
+    </section>
 
-          <div id="qr-reader-diesel" class="hidden"></div>
+    <!-- SECCIÓN 3: PETICIÓN DE MANTENIMIENTO (ROL CAMPO / ADMIN) -->
+    <section id="sec-solicitud-mnt" class="hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>🛠️ Reportar Falla / Mantenimiento</span>
+          <button class="btn btn-outline btn-sm" style="margin:0;" onclick="toggleScanner('mnt')">📷 Escanear QR</button>
+        </div>
 
-          <div class="field">
-            <label for="diesel-tractor">Tractor (Escanea QR o selecciona)</label>
-            <select class="select" id="diesel-tractor" onchange="checkCrossRanch()"></select>
-          </div>
+        <div id="qr-reader-mnt" class="hidden"></div>
 
-          <div id="cross-ranch-alert" class="notice notice-amber hidden" style="margin-bottom:14px;"></div>
+        <label for="mnt-tractor">Tractor con falla *</label>
+        <select id="mnt-tractor"></select>
 
-          <div class="field">
-            <label for="diesel-rancho-carga">Rancho donde despacha</label>
-            <select class="select" id="diesel-rancho-carga" onchange="checkCrossRanch()">
+        <div class="grid-2">
+          <div>
+            <label for="mnt-rancho">Rancho donde está *</label>
+            <select id="mnt-rancho">
               <option value="EDEN">El Edén</option>
               <option value="MATANUZKA">Matanuzka</option>
               <option value="ESPERANZA">La Esperanza</option>
               <option value="ARADOS">Arados</option>
             </select>
           </div>
-
-          <div class="row-2">
-            <div class="field">
-              <label for="diesel-litros">Litros *</label>
-              <input class="input" type="number" id="diesel-litros" step="0.1" min="0.1" placeholder="Ej. 85.5" />
-            </div>
-            <div class="field">
-              <label for="diesel-horometro">Horómetro</label>
-              <input class="input" type="number" id="diesel-horometro" step="0.1" placeholder="Ej. 1420.5" />
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="diesel-actividad">Actividad que realiza el tractor *</label>
-            <select class="select" id="diesel-actividad">
-              <option value="Cosecha">Cosecha</option>
-              <option value="Establos / Alimentación">Establos / Alimentación</option>
-              <option value="Preparación de tierra / Barbecho">Preparación de tierra / Barbecho</option>
-              <option value="Siembra">Siembra</option>
-              <option value="Acarreo / Transporte">Acarreo / Transporte</option>
-              <option value="Riego / Nivelación">Riego / Nivelación</option>
-              <option value="Mantenimiento de caminos">Mantenimiento de caminos</option>
-              <option value="Otra actividad">Otra actividad</option>
+          <div>
+            <label for="mnt-prioridad">Prioridad *</label>
+            <select id="mnt-prioridad">
+              <option value="NORMAL">Normal</option>
+              <option value="URGENTE">🚨 Urgente (Parado)</option>
             </select>
           </div>
-
-          <button class="btn btn-amber" onclick="registrarDiesel()">💾 Registrar Carga de Diésel</button>
-          <div id="diesel-msg" class="notice hidden"></div>
         </div>
 
-        <div class="card">
-          <div class="card-head">
-            <h2>📋 Últimas Cargas</h2>
-          </div>
-          <div id="lista-diesel">Cargando historial...</div>
-        </div>
-      </section>
+        <label for="mnt-falla">Descripción de la falla *</label>
+        <textarea id="mnt-falla" rows="3" placeholder="Describe qué le falla al tractor..."></textarea>
 
-      <!-- 2. ALTA DE TRACTORES CON ID AUTOMÁTICO + IMPRESIÓN QR -->
-      <section id="sec-alta-qr" class="hidden">
-        <div class="card">
-          <div class="card-head">
-            <h2>🚜 Alta de Tractor y QR</h2>
-          </div>
-          <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
-            Al guardar, la base de datos asigna automáticamente un <strong>ID único e irrepetible</strong> (ej. TRC-001) y genera su etiqueta lista para imprimir.
-          </p>
+        <label for="mnt-foto-inicial">Foto de evidencia inicial (opcional)</label>
+        <input type="file" id="mnt-foto-inicial" accept="image/*" capture="environment" />
 
-          <div class="field">
-            <label for="trc-modelo">Modelo / Marca del Tractor *</label>
-            <input class="input" type="text" id="trc-modelo" placeholder="Ej. John Deere 6110J / Kubota M5100" />
-          </div>
+        <button class="btn btn-terra" onclick="crearTicketMantenimiento()">📤 Enviar Petición a Taller</button>
+        <div id="mnt-sol-msg" class="alert hidden"></div>
+      </div>
 
-          <div class="row-2">
-            <div class="field">
-              <label for="trc-serie">Número de Serie</label>
-              <input class="input" type="text" id="trc-serie" placeholder="Opcional" />
-            </div>
-            <div class="field">
-              <label for="trc-tanque">Tanque (Litros)</label>
-              <input class="input" type="number" id="trc-tanque" placeholder="Ej. 180" />
-            </div>
-          </div>
+      <div class="card">
+        <div class="card-title">Mis Reportes Enviados</div>
+        <div id="lista-mis-tickets">Cargando...</div>
+      </div>
+    </section>
 
-          <div class="field">
-            <label for="trc-rancho">Rancho Base (Dueño del tractor) *</label>
-            <select class="select" id="trc-rancho">
-              <option value="EDEN">El Edén</option>
-              <option value="MATANUZKA">Matanuzka</option>
-              <option value="ESPERANZA">La Esperanza</option>
-              <option value="ARADOS">Arados</option>
-            </select>
-          </div>
+    <!-- SECCIÓN 4: TALLER / REPARACIÓN REALIZADA (ROL TALLER / ADMIN) -->
+    <section id="sec-taller" class="hidden">
+      <div class="card">
+        <div class="card-title">🔧 Órdenes de Taller Pendientes y En Espera</div>
+        <div id="lista-taller-abiertos">Cargando tickets...</div>
+      </div>
 
-          <button class="btn btn-green" onclick="registrarTractorQR()">✨ Guardar Unidad y Generar QR</button>
-          <div id="trc-msg" class="notice hidden"></div>
+      <div id="card-cerrar-ticket" class="card hidden">
+        <div class="card-title">Atender Ticket #<span id="edit-ticket-id"></span></div>
+        <p id="edit-ticket-info" style="font-size:13px; color:var(--gris); margin-bottom:8px;"></p>
 
-          <!-- ETIQUETA QR GENERADA -->
-          <div id="qr-ticket-box" class="qr-ticket hidden">
-            <span class="pill pill-green" id="qr-lbl-rancho">RANCHO</span>
-            <canvas id="qr-canvas" style="margin:12px auto; display:block;"></canvas>
-            <h3 id="qr-lbl-id">TRC-001</h3>
-            <p id="qr-lbl-modelo" style="font-size:14px; font-weight:700; color:var(--text-muted); margin-top:2px;"></p>
-            <p id="qr-lbl-serie" style="font-size:11px; color:var(--text-muted); margin-top:2px;"></p>
-            <div class="qr-btn-group">
-              <button class="btn btn-green btn-mini" onclick="imprimirEtiquetaQR()">🖨️ Imprimir Etiqueta QR</button>
-              <button class="btn btn-amber btn-mini" onclick="descargarEtiquetaQR()">⬇️ Descargar PNG</button>
-            </div>
-          </div>
+        <label for="edit-estatus">Nuevo Estatus *</label>
+        <select id="edit-estatus" onchange="toggleMotivoEspera()">
+          <option value="FINALIZADO">✅ Finalizado / Reparado</option>
+          <option value="EN_ESPERA">⏳ En espera (Refacción / Externo)</option>
+        </select>
+
+        <div id="box-motivo-espera" class="hidden">
+          <label for="edit-motivo">Motivo de espera</label>
+          <select id="edit-motivo">
+            <option value="Compra de refacción">Compra de refacción</option>
+            <option value="Taller externo / Especialista">Taller externo / Especialista</option>
+            <option value="En diagnóstico">En diagnóstico</option>
+          </select>
         </div>
 
-        <div class="card">
-          <div class="card-head">
-            <h2>🚜 Flota Registrada (<span id="count-tractores">0</span>)</h2>
-          </div>
-          <div id="lista-tractores">Cargando tractores...</div>
+        <label for="edit-trabajo">Trabajo realizado / Diagnóstico *</label>
+        <textarea id="edit-trabajo" rows="3" placeholder="Describe la reparación efectuada..."></textarea>
+
+        <label for="edit-foto-final">Foto de reparación terminada (opcional)</label>
+        <input type="file" id="edit-foto-final" accept="image/*" capture="environment" />
+
+        <div class="grid-2">
+          <button class="btn btn-outline" onclick="cancelarEdicionTicket()">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarCierreTicket()">Guardar Avance</button>
         </div>
-      </section>
+        <div id="taller-msg" class="alert hidden"></div>
+      </div>
 
-      <!-- 3. PETICIÓN DE MANTENIMIENTO -->
-      <section id="sec-solicitud-mnt" class="hidden">
-        <div class="card">
-          <div class="card-head">
-            <h2>🛠️ Reportar Falla</h2>
-            <button class="btn btn-soft btn-mini" onclick="toggleScanner('mnt')">📷 Escanear QR</button>
+      <div class="card">
+        <div class="card-title">Historial de Reparaciones Cerradas</div>
+        <div id="lista-taller-cerrados">Cargando...</div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 5: PANEL ADMIN (RESUMEN POR RANCHO) -->
+    <section id="sec-admin" class="hidden">
+      <div class="card">
+        <div class="card-title">📊 Resumen Operativo Global</div>
+        <div class="grid-2">
+          <div class="stat-box">
+            <strong id="kpi-tractores">0</strong>
+            <small>Tractores Activos</small>
           </div>
-
-          <div id="qr-reader-mnt" class="hidden"></div>
-
-          <div class="field">
-            <label for="mnt-tractor">Tractor con falla *</label>
-            <select class="select" id="mnt-tractor"></select>
+          <div class="stat-box">
+            <strong id="kpi-litros">0 L</strong>
+            <small>Diésel Despachado</small>
           </div>
-
-          <div class="row-2">
-            <div class="field">
-              <label for="mnt-rancho">Rancho donde está *</label>
-              <select class="select" id="mnt-rancho">
-                <option value="EDEN">El Edén</option>
-                <option value="MATANUZKA">Matanuzka</option>
-                <option value="ESPERANZA">La Esperanza</option>
-                <option value="ARADOS">Arados</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="mnt-prioridad">Prioridad *</label>
-              <select class="select" id="mnt-prioridad">
-                <option value="NORMAL">Normal</option>
-                <option value="URGENTE">🚨 Urgente</option>
-              </select>
-            </div>
+          <div class="stat-box" style="background:var(--dorado-claro);">
+            <strong id="kpi-prestamos" style="color:#8a5b0c;">0</strong>
+            <small>Cargas Cruzadas</small>
           </div>
-
-          <div class="field">
-            <label for="mnt-falla">Descripción de la falla *</label>
-            <textarea class="textarea" id="mnt-falla" rows="3" placeholder="Describe qué le falla al tractor..."></textarea>
-          </div>
-
-          <div class="field">
-            <label for="mnt-foto-inicial">Foto de evidencia inicial (opcional)</label>
-            <input class="input" type="file" id="mnt-foto-inicial" accept="image/*" capture="environment" />
-          </div>
-
-          <button class="btn btn-red" onclick="crearTicketMantenimiento()">📤 Enviar Petición a Taller</button>
-          <div id="mnt-sol-msg" class="notice hidden"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-head">
-            <h2>📑 Mis Reportes Enviados</h2>
-          </div>
-          <div id="lista-mis-tickets">Cargando...</div>
-        </div>
-      </section>
-
-      <!-- 4. TALLER / REPARACIÓN REALIZADA -->
-      <section id="sec-taller" class="hidden">
-        <div class="card">
-          <div class="card-head">
-            <h2>🔧 Órdenes Pendientes y En Espera</h2>
-          </div>
-          <div id="lista-taller-abiertos">Cargando tickets...</div>
-        </div>
-
-        <div id="card-cerrar-ticket" class="card hidden">
-          <div class="card-head">
-            <h2>✅ Atender Ticket #<span id="edit-ticket-id"></span></h2>
-          </div>
-          <p id="edit-ticket-info" style="font-size:13px; color:var(--text-muted); margin-bottom:12px;"></p>
-
-          <div class="field">
-            <label for="edit-estatus">Nuevo Estatus *</label>
-            <select class="select" id="edit-estatus" onchange="toggleMotivoEspera()">
-              <option value="FINALIZADO">✅ Finalizado / Reparado</option>
-              <option value="EN_ESPERA">⏳ En espera (Refacción / Externo)</option>
-            </select>
-          </div>
-
-          <div id="box-motivo-espera" class="field hidden">
-            <label for="edit-motivo">Motivo de espera</label>
-            <select class="select" id="edit-motivo">
-              <option value="Compra de refacción">Compra de refacción</option>
-              <option value="Taller externo / Especialista">Taller externo / Especialista</option>
-              <option value="En diagnóstico">En diagnóstico</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="edit-trabajo">Trabajo realizado / Diagnóstico *</label>
-            <textarea class="textarea" id="edit-trabajo" rows="3" placeholder="Describe la reparación efectuada..."></textarea>
-          </div>
-
-          <div class="field">
-            <label for="edit-foto-final">Foto de reparación terminada (opcional)</label>
-            <input class="input" type="file" id="edit-foto-final" accept="image/*" capture="environment" />
-          </div>
-
-          <div class="row-2">
-            <button class="btn btn-soft" onclick="cancelarEdicionTicket()">Cancelar</button>
-            <button class="btn btn-green" onclick="guardarCierreTicket()">Guardar Avance</button>
-          </div>
-          <div id="taller-msg" class="notice hidden"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-head">
-            <h2>🗂️ Historial de Reparaciones Cerradas</h2>
-          </div>
-          <div id="lista-taller-cerrados">Cargando...</div>
-        </div>
-      </section>
-
-      <!-- 5. PANEL ADMIN -->
-      <section id="sec-admin" class="hidden">
-        <div class="card">
-          <div class="card-head">
-            <h2>📊 Resumen Operativo Global</h2>
-          </div>
-          <div class="kpi-grid">
-            <div class="kpi-card">
-              <span class="num" id="kpi-tractores">0</span>
-              <span class="lbl">Tractores Activos</span>
-            </div>
-            <div class="kpi-card">
-              <span class="num" id="kpi-litros">0 L</span>
-              <span class="lbl">Diésel Despachado</span>
-            </div>
-            <div class="kpi-card" style="background:var(--accent-soft);">
-              <span class="num" id="kpi-prestamos" style="color:#9A5E08;">0</span>
-              <span class="lbl">Cargas Cruzadas</span>
-            </div>
-            <div class="kpi-card" style="background:var(--danger-soft);">
-              <span class="num" id="kpi-abiertos" style="color:var(--danger);">0</span>
-              <span class="lbl">Fallas Abiertas</span>
-            </div>
+          <div class="stat-box" style="background:var(--terracota-claro);">
+            <strong id="kpi-abiertos" style="color:var(--terracota);">0</strong>
+            <small>Fallas Abiertas</small>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-    </div>
-  </main>
+  </div>
+</div>
 
-  <!-- NAVEGACIÓN INFERIOR -->
-  <nav class="tabbar hidden" id="bottom-nav"></nav>
+<!-- BARRA DE NAVEGACIÓN INFERIOR DINÁMICA SEGÚN ROL -->
+<nav class="bottom-nav hidden" id="bottom-nav"></nav>
 
-  <script>
-    const SUPABASE_URL = 'https://swgqjmowhdkzaodkyvpj.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_1PeWHaPebHs1e_vqsqr6Fw_KvQjSl-e';
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script>
+  // =========================================================================
+  // CONFIGURACIÓN SUPABASE
+  // =========================================================================
+  const SUPABASE_URL = 'https://swgqjmowhdkzaodkyvpj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_1PeWHaPebHs1e_vqsqr6Fw_KvQjSl-e';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const RANCHOS_MAP = {
-      EDEN: 'El Edén',
-      MATANUZKA: 'Matanuzka',
-      ESPERANZA: 'La Esperanza',
-      ARADOS: 'Arados'
+  const RANCHOS_MAP = {
+    EDEN: 'El Edén',
+    MATANUZKA: 'Matanuzka',
+    ESPERANZA: 'La Esperanza',
+    ARADOS: 'Arados'
+  };
+
+  let currentUser = null;
+  let tractoresCache = [];
+  let html5QrScanner = null;
+  let activeScannerTarget = null;
+  let lastGeneratedTractor = null;
+  let deferredPrompt = null;
+
+  // =========================================================================
+  // PWA INSTALL & ONLINE STATUS
+  // =========================================================================
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('btn-install-pwa').classList.remove('hidden');
+  });
+
+  async function installPWA() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('btn-install-pwa').classList.add('hidden');
+  }
+
+  function updateOnlineStatus() {
+    const dot = document.getElementById('conn-dot');
+    const txt = document.getElementById('conn-text');
+    if (navigator.onLine) {
+      dot.classList.remove('offline');
+      txt.textContent = 'Supabase OK';
+    } else {
+      dot.classList.add('offline');
+      txt.textContent = 'Sin señal';
+    }
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // =========================================================================
+  // AUTENTICACIÓN Y CONTROL ESTRICTO POR ROL (RBAC)
+  // =========================================================================
+  async function login() {
+    const userId = document.getElementById('login-user').value.trim().toLowerCase();
+    const pin = document.getElementById('login-pin').value.trim();
+    const errBox = document.getElementById('login-error');
+    errBox.classList.add('hidden');
+
+    if (!userId || !pin) {
+      errBox.textContent = 'Escribe tu usuario y PIN.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    const { data, error } = await db
+      .from('usuarios_roles')
+      .select('*')
+      .eq('id_usuario', userId)
+      .eq('pin', pin)
+      .eq('activo', true)
+      .single();
+
+    if (error || !data) {
+      errBox.textContent = 'Usuario o PIN incorrecto, o cuenta inactiva.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    currentUser = data;
+    localStorage.setItem('agrofleet_session', JSON.stringify(data));
+    initSessionUI();
+  }
+
+  function logout() {
+    stopScanner();
+    currentUser = null;
+    localStorage.removeItem('agrofleet_session');
+    document.getElementById('app-shell').classList.add('hidden');
+    document.getElementById('bottom-nav').classList.add('hidden');
+    document.getElementById('btn-logout').classList.add('hidden');
+    document.getElementById('view-login').classList.remove('hidden');
+    document.getElementById('login-pin').value = '';
+  }
+
+  function initSessionUI() {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('app-shell').classList.remove('hidden');
+    document.getElementById('btn-logout').classList.remove('hidden');
+    document.getElementById('bottom-nav').classList.remove('hidden');
+
+    document.getElementById('user-display-name').textContent = currentUser.nombre;
+    document.getElementById('user-display-role').textContent = currentUser.rol;
+    const ranchoTxt = currentUser.id_rancho ? RANCHOS_MAP[currentUser.id_rancho] : 'Todos los ranchos';
+    document.getElementById('user-display-rancho').textContent = 'Ubicación: ' + ranchoTxt;
+
+    if (currentUser.id_rancho) {
+      document.getElementById('diesel-rancho-carga').value = currentUser.id_rancho;
+      document.getElementById('trc-rancho').value = currentUser.id_rancho;
+      document.getElementById('mnt-rancho').value = currentUser.id_rancho;
+      if (currentUser.rol === 'DIESEL') {
+        document.getElementById('diesel-rancho-carga').disabled = true;
+      }
+    } else {
+      document.getElementById('diesel-rancho-carga').disabled = false;
+    }
+
+    buildNavigationForRole(currentUser.rol);
+    refreshAllData();
+  }
+
+  function buildNavigationForRole(rol) {
+    const nav = document.getElementById('bottom-nav');
+    nav.innerHTML = '';
+
+    const tabsByRole = {
+      ADMIN: [
+        { id: 'sec-admin', label: 'Resumen', ico: '📊' },
+        { id: 'sec-diesel', label: 'Diésel', ico: '⛽' },
+        { id: 'sec-alta-qr', label: 'Alta/QR', ico: '🚜' },
+        { id: 'sec-solicitud-mnt', label: 'Fallas', ico: '🛠️' },
+        { id: 'sec-taller', label: 'Taller', ico: '🔧' }
+      ],
+      DIESEL: [
+        { id: 'sec-diesel', label: 'Cargar Diésel', ico: '⛽' },
+        { id: 'sec-alta-qr', label: 'Alta / QR', ico: '🚜' }
+      ],
+      SOLICITANTE_MNT: [
+        { id: 'sec-solicitud-mnt', label: 'Reportar Falla', ico: '🛠️' }
+      ],
+      TECNICO_MNT: [
+        { id: 'sec-taller', label: 'Taller / Cierre', ico: '🔧' }
+      ]
     };
 
-    let currentUser = null;
-    let tractoresCache = [];
-    let html5QrScanner = null;
-    let activeScannerTarget = null;
-    let lastGeneratedTractor = null;
-    let deferredPrompt = null;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      document.getElementById('btn-install-pwa').classList.remove('hidden');
+    const allowed = tabsByRole[rol] || [];
+    allowed.forEach((t, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'nav-btn' + (idx === 0 ? ' active' : '');
+      btn.dataset.target = t.id;
+      btn.innerHTML = `<span class="ico">${t.ico}</span><span>${t.label}</span>`;
+      btn.onclick = () => switchSection(t.id);
+      nav.appendChild(btn);
     });
 
-    async function installPWA() {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      document.getElementById('btn-install-pwa').classList.add('hidden');
-    }
+    if (allowed.length > 0) switchSection(allowed[0].id);
+  }
 
-    function updateOnlineStatus() {
-      const dot = document.getElementById('net-dot');
-      const txt = document.getElementById('net-label');
-      if (navigator.onLine) {
-        dot.classList.remove('off');
-        txt.textContent = 'En línea';
-      } else {
-        dot.classList.add('off');
-        txt.textContent = 'Sin señal';
-      }
-    }
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus();
+  function switchSection(secId) {
+    stopScanner();
+    ['sec-admin', 'sec-diesel', 'sec-alta-qr', 'sec-solicitud-mnt', 'sec-taller'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+    document.getElementById(secId).classList.remove('hidden');
 
-    async function login() {
-      const userId = document.getElementById('login-user').value.trim().toLowerCase();
-      const pin = document.getElementById('login-pin').value.trim();
-      const errBox = document.getElementById('login-error');
-      errBox.classList.add('hidden');
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.target === secId);
+    });
+  }
 
-      if (!userId || !pin) {
-        errBox.textContent = 'Escribe tu usuario y PIN.';
-        errBox.classList.remove('hidden');
-        return;
-      }
+  // =========================================================================
+  // CARGA DE DATOS DESDE SUPABASE
+  // =========================================================================
+  async function refreshAllData() {
+    await loadTractores();
+    await loadDieselHistory();
+    await loadTicketsMantenimiento();
+  }
 
-      const { data, error } = await db
-        .from('usuarios_roles')
-        .select('*')
-        .eq('id_usuario', userId)
-        .eq('pin', pin)
-        .eq('activo', true)
-        .single();
+  async function loadTractores() {
+    const { data, error } = await db
+      .from('tractores')
+      .select('*')
+      .order('id_tractor', { ascending: true });
 
-      if (error || !data) {
-        errBox.textContent = 'Usuario o PIN incorrecto, o cuenta inactiva.';
-        errBox.classList.remove('hidden');
-        return;
-      }
+    if (error) return;
+    tractoresCache = data || [];
 
-      currentUser = data;
-      localStorage.setItem('agrofleet_session', JSON.stringify(data));
-      initSessionUI();
-    }
+    document.getElementById('count-tractores').textContent = tractoresCache.length;
+    document.getElementById('kpi-tractores').textContent = tractoresCache.length;
 
-    function logout() {
-      stopScanner();
-      currentUser = null;
-      localStorage.removeItem('agrofleet_session');
-      document.getElementById('app-shell').classList.add('hidden');
-      document.getElementById('bottom-nav').classList.add('hidden');
-      document.getElementById('btn-logout').classList.add('hidden');
-      document.getElementById('view-login').classList.remove('hidden');
-      document.getElementById('login-pin').value = '';
-    }
+    const opts = tractoresCache.length
+      ? tractoresCache.map(t => `<option value="${t.id_tractor}">${t.id_tractor} — ${t.modelo} (${RANCHOS_MAP[t.id_rancho_base] || t.id_rancho_base})</option>`).join('')
+      : '<option value="">-- No hay tractores registrados aún --</option>';
 
-    function initSessionUI() {
-      document.getElementById('view-login').classList.add('hidden');
-      document.getElementById('app-shell').classList.remove('hidden');
-      document.getElementById('btn-logout').classList.remove('hidden');
-      document.getElementById('bottom-nav').classList.remove('hidden');
+    document.getElementById('diesel-tractor').innerHTML = opts;
+    document.getElementById('mnt-tractor').innerHTML = opts;
 
-      document.getElementById('user-display-name').textContent = currentUser.nombre;
-      document.getElementById('user-display-role').textContent = currentUser.rol;
-      const ranchoTxt = currentUser.id_rancho ? RANCHOS_MAP[currentUser.id_rancho] : 'Todos los ranchos';
-      document.getElementById('user-display-rancho').textContent = 'Ubicación: ' + ranchoTxt;
-
-      if (currentUser.id_rancho) {
-        document.getElementById('diesel-rancho-carga').value = currentUser.id_rancho;
-        document.getElementById('trc-rancho').value = currentUser.id_rancho;
-        document.getElementById('mnt-rancho').value = currentUser.id_rancho;
-        if (currentUser.rol === 'DIESEL') {
-          document.getElementById('diesel-rancho-carga').disabled = true;
-        }
-      } else {
-        document.getElementById('diesel-rancho-carga').disabled = false;
-      }
-
-      buildNavigationForRole(currentUser.rol);
-      refreshAllData();
-    }
-
-    function buildNavigationForRole(rol) {
-      const nav = document.getElementById('bottom-nav');
-      nav.innerHTML = '';
-
-      const tabsByRole = {
-        ADMIN: [
-          { id: 'sec-admin', label: 'Resumen', ico: '📊' },
-          { id: 'sec-diesel', label: 'Diésel', ico: '⛽' },
-          { id: 'sec-alta-qr', label: 'Alta/QR', ico: '🚜' },
-          { id: 'sec-solicitud-mnt', label: 'Fallas', ico: '🛠️' },
-          { id: 'sec-taller', label: 'Taller', ico: '🔧' }
-        ],
-        DIESEL: [
-          { id: 'sec-diesel', label: 'Cargar Diésel', ico: '⛽' },
-          { id: 'sec-alta-qr', label: 'Alta / QR', ico: '🚜' }
-        ],
-        SOLICITANTE_MNT: [
-          { id: 'sec-solicitud-mnt', label: 'Reportar Falla', ico: '🛠️' }
-        ],
-        TECNICO_MNT: [
-          { id: 'sec-taller', label: 'Taller / Cierre', ico: '🔧' }
-        ]
-      };
-
-      const allowed = tabsByRole[rol] || [];
-      allowed.forEach((t, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'tab-btn' + (idx === 0 ? ' active' : '');
-        btn.dataset.target = t.id;
-        btn.innerHTML = `<span class="icon">${t.ico}</span><span>${t.label}</span>`;
-        btn.onclick = () => switchSection(t.id);
-        nav.appendChild(btn);
-      });
-
-      if (allowed.length > 0) switchSection(allowed[0].id);
-    }
-
-    function switchSection(secId) {
-      stopScanner();
-      ['sec-admin', 'sec-diesel', 'sec-alta-qr', 'sec-solicitud-mnt', 'sec-taller'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-      });
-      document.getElementById(secId).classList.remove('hidden');
-
-      document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.target === secId);
-      });
-    }
-
-    async function refreshAllData() {
-      await loadTractores();
-      await loadDieselHistory();
-      await loadTicketsMantenimiento();
-    }
-
-    async function loadTractores() {
-      const { data, error } = await db
-        .from('tractores')
-        .select('*')
-        .order('id_tractor', { ascending: true });
-
-      if (error) return;
-      tractoresCache = data || [];
-
-      document.getElementById('count-tractores').textContent = tractoresCache.length;
-      document.getElementById('kpi-tractores').textContent = tractoresCache.length;
-
-      const opts = tractoresCache.length
-        ? tractoresCache.map(t => `<option value="${t.id_tractor}">${t.id_tractor} — ${t.modelo} (${RANCHOS_MAP[t.id_rancho_base] || t.id_rancho_base})</option>`).join('')
-        : '<option value="">-- No hay tractores registrados aún --</option>';
-
-      document.getElementById('diesel-tractor').innerHTML = opts;
-      document.getElementById('mnt-tractor').innerHTML = opts;
-
-      const listEl = document.getElementById('lista-tractores');
-      if (!tractoresCache.length) {
-        listEl.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Aún no hay tractores. Registra el primero arriba para generar su QR.</p>';
-      } else {
-        listEl.innerHTML = tractoresCache.map(t => `
-          <div class="item-box">
-            <div class="item-top">
-              <span class="item-title">${t.id_tractor} — ${t.modelo}</span>
-              <span class="pill pill-green">${RANCHOS_MAP[t.id_rancho_base] || t.id_rancho_base}</span>
-            </div>
-            <div class="item-meta" style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
-              <span>Serie: ${t.serie || 'N/A'} | Tanque: ${t.capacidad_tanque || '-'} L</span>
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-soft btn-mini" onclick="verQRDeTractor('${t.id_tractor}')">Ver QR</button>
-                <button class="btn btn-green btn-mini" onclick="verYImprimirQR('${t.id_tractor}')">🖨️ Imprimir</button>
-              </div>
-            </div>
+    const listEl = document.getElementById('lista-tractores');
+    if (!tractoresCache.length) {
+      listEl.innerHTML = '<p style="font-size:13px; color:var(--gris);">Aún no hay tractores. Registra el primero arriba para generar su QR.</p>';
+    } else {
+      listEl.innerHTML = tractoresCache.map(t => `
+        <div class="list-item">
+          <div class="list-top">
+            <strong>${t.id_tractor} — ${t.modelo}</strong>
+            <span class="badge badge-green">${RANCHOS_MAP[t.id_rancho_base] || t.id_rancho_base}</span>
           </div>
-        `).join('');
-      }
-      checkCrossRanch();
-    }
-
-    async function registrarTractorQR() {
-      const modelo = document.getElementById('trc-modelo').value.trim();
-      const serie = document.getElementById('trc-serie').value.trim();
-      const tanque = parseFloat(document.getElementById('trc-tanque').value) || null;
-      const rancho = document.getElementById('trc-rancho').value;
-      const msg = document.getElementById('trc-msg');
-
-      if (!modelo) {
-        showMsg(msg, 'Escribe el modelo del tractor.', 'notice-red');
-        return;
-      }
-
-      const { data, error } = await db
-        .from('tractores')
-        .insert([{
-          modelo,
-          serie: serie || null,
-          capacidad_tanque: tanque,
-          id_rancho_base: rancho,
-          creado_por: currentUser.id_usuario
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        showMsg(msg, 'Error al registrar: ' + error.message, 'notice-red');
-        return;
-      }
-
-      document.getElementById('trc-modelo').value = '';
-      document.getElementById('trc-serie').value = '';
-      document.getElementById('trc-tanque').value = '';
-      showMsg(msg, `✅ Unidad registrada con folio único: ${data.id_tractor}. Lista para imprimir.`, 'notice-green');
-
-      await loadTractores();
-      renderQREtiqueta(data);
-    }
-
-    function verQRDeTractor(idTractor) {
-      const t = tractoresCache.find(x => x.id_tractor === idTractor);
-      if (t) renderQREtiqueta(t);
-    }
-
-    function verYImprimirQR(idTractor) {
-      const t = tractoresCache.find(x => x.id_tractor === idTractor);
-      if (!t) return;
-      renderQREtiqueta(t);
-      setTimeout(() => imprimirEtiquetaQR(), 250);
-    }
-
-    function renderQREtiqueta(tractor) {
-      lastGeneratedTractor = tractor;
-      const box = document.getElementById('qr-ticket-box');
-      box.classList.remove('hidden');
-      document.getElementById('qr-lbl-id').textContent = tractor.id_tractor;
-      document.getElementById('qr-lbl-modelo').textContent = tractor.modelo;
-      document.getElementById('qr-lbl-serie').textContent = tractor.serie ? 'Serie: ' + tractor.serie : '';
-      document.getElementById('qr-lbl-rancho').textContent = 'BASE: ' + (RANCHOS_MAP[tractor.id_rancho_base] || tractor.id_rancho_base);
-
-      const canvas = document.getElementById('qr-canvas');
-      QRCode.toCanvas(canvas, tractor.id_tractor, { width: 210, margin: 2 });
-      box.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function buildEtiquetaDataURL() {
-      if (!lastGeneratedTractor) return null;
-      const srcCanvas = document.getElementById('qr-canvas');
-      const out = document.createElement('canvas');
-      out.width = 340;
-      out.height = 420;
-      const ctx = out.getContext('2d');
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, out.width, out.height);
-      ctx.strokeStyle = '#1B3B22';
-      ctx.lineWidth = 6;
-      ctx.strokeRect(8, 8, out.width - 16, out.height - 16);
-
-      ctx.fillStyle = '#1B3B22';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('AGROFLEET QR — ' + (RANCHOS_MAP[lastGeneratedTractor.id_rancho_base] || ''), 170, 42);
-
-      ctx.drawImage(srcCanvas, 65, 58, 210, 210);
-
-      ctx.fillStyle = '#1B3B22';
-      ctx.font = 'bold 36px sans-serif';
-      ctx.fillText(lastGeneratedTractor.id_tractor, 170, 315);
-
-      ctx.fillStyle = '#333333';
-      ctx.font = '600 16px sans-serif';
-      ctx.fillText(lastGeneratedTractor.modelo.slice(0, 30), 170, 348);
-
-      if (lastGeneratedTractor.serie) {
-        ctx.fillStyle = '#666666';
-        ctx.font = '13px sans-serif';
-        ctx.fillText('Serie: ' + lastGeneratedTractor.serie.slice(0, 28), 170, 374);
-      }
-
-      return out.toDataURL('image/png');
-    }
-
-    function imprimirEtiquetaQR() {
-      if (!lastGeneratedTractor) return;
-      const imgData = buildEtiquetaDataURL();
-      const printWin = window.open('', '_blank', 'width=420,height=560');
-      if (printWin) {
-        printWin.document.write(`
-          <!DOCTYPE html>
-          <html lang="es">
-          <head>
-            <title>Imprimir QR — ${lastGeneratedTractor.id_tractor}</title>
-            <style>
-              body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; }
-              img { width: 300px; height: auto; }
-              @media print { @page { margin: 8mm; } }
-            </style>
-          </head>
-          <body>
-            <img src="${imgData}" onload="window.print(); window.close();" />
-          </body>
-          </html>
-        `);
-        printWin.document.close();
-      } else {
-        window.print();
-      }
-    }
-
-    function descargarEtiquetaQR() {
-      const imgData = buildEtiquetaDataURL();
-      if (!imgData) return;
-      const link = document.createElement('a');
-      link.download = `QR_${lastGeneratedTractor.id_tractor}.png`;
-      link.href = imgData;
-      link.click();
-    }
-
-    function checkCrossRanch() {
-      const idTrc = document.getElementById('diesel-tractor').value;
-      const ranchoCarga = document.getElementById('diesel-rancho-carga').value;
-      const alertBox = document.getElementById('cross-ranch-alert');
-
-      const trc = tractoresCache.find(t => t.id_tractor === idTrc);
-      if (!trc || trc.id_rancho_base === ranchoCarga) {
-        alertBox.classList.add('hidden');
-        return;
-      }
-
-      alertBox.innerHTML = `🔄 <strong>Préstamo / Carga Cruzada:</strong> Este tractor pertenece a <strong>${RANCHOS_MAP[trc.id_rancho_base]}</strong> y está cargando diésel en <strong>${RANCHOS_MAP[ranchoCarga]}</strong>.`;
-      alertBox.classList.remove('hidden');
-    }
-
-    async function registrarDiesel() {
-      const id_tractor = document.getElementById('diesel-tractor').value;
-      const id_rancho_carga = document.getElementById('diesel-rancho-carga').value;
-      const litros = parseFloat(document.getElementById('diesel-litros').value);
-      const horometro = parseFloat(document.getElementById('diesel-horometro').value) || null;
-      const actividad = document.getElementById('diesel-actividad').value;
-      const msg = document.getElementById('diesel-msg');
-
-      if (!id_tractor || !litros || litros <= 0) {
-        showMsg(msg, 'Selecciona un tractor e ingresa los litros válidos.', 'notice-red');
-        return;
-      }
-
-      const { error } = await db.from('cargas_diesel').insert([{
-        id_tractor,
-        id_rancho_carga,
-        litros,
-        horometro,
-        actividad,
-        id_usuario_diesel: currentUser.id_usuario
-      }]);
-
-      if (error) {
-        showMsg(msg, 'Error al guardar carga: ' + error.message, 'notice-red');
-        return;
-      }
-
-      document.getElementById('diesel-litros').value = '';
-      document.getElementById('diesel-horometro').value = '';
-      showMsg(msg, `✅ Carga de ${litros} L registrada para ${id_tractor}.`, 'notice-green');
-      await loadDieselHistory();
-    }
-
-    async function loadDieselHistory() {
-      const { data, error } = await db
-        .from('vista_cargas_detallada')
-        .select('*')
-        .order('fecha_hora', { ascending: false })
-        .limit(30);
-
-      const box = document.getElementById('lista-diesel');
-      if (error || !data) {
-        box.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Sin registros disponibles.</p>';
-        return;
-      }
-
-      let totalLitros = 0;
-      let totalPrestamos = 0;
-      data.forEach(c => {
-        totalLitros += Number(c.litros || 0);
-        if (c.es_prestamo_entre_ranchos) totalPrestamos++;
-      });
-      document.getElementById('kpi-litros').textContent = totalLitros.toFixed(1) + ' L';
-      document.getElementById('kpi-prestamos').textContent = totalPrestamos;
-
-      const filtrados = currentUser.rol === 'DIESEL' && currentUser.id_rancho
-        ? data.filter(c => c.rancho_donde_cargo === RANCHOS_MAP[currentUser.id_rancho])
-        : data;
-
-      if (!filtrados.length) {
-        box.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Aún no hay cargas registradas aquí.</p>';
-        return;
-      }
-
-      box.innerHTML = filtrados.map(c => `
-        <div class="item-box">
-          <div class="item-top">
-            <span class="item-title">${c.id_tractor} — ${c.litros} L</span>
-            ${c.es_prestamo_entre_ranchos
-              ? `<span class="pill pill-amber">Préstamo: ${c.rancho_dueno_tractor} ➔ ${c.rancho_donde_cargo}</span>`
-              : `<span class="pill pill-green">${c.rancho_donde_cargo}</span>`}
-          </div>
-          <div class="item-meta">
-            Actividad: <strong>${c.actividad}</strong> | Horómetro: ${c.horometro || '-'}<br/>
-            ${new Date(c.fecha_hora).toLocaleString('es-MX')} — Por: ${c.despachador}
+          <div style="font-size:12px; color:var(--gris); display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span>Serie: ${t.serie || 'N/A'} | Tanque: ${t.capacidad_tanque || '-'} L</span>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-outline btn-sm" style="margin:0;" onclick="verQRDeTractor('${t.id_tractor}')">Ver QR</button>
+              <button class="btn btn-primary btn-sm" style="margin:0;" onclick="verYImprimirQR('${t.id_tractor}')">🖨️ Imprimir</button>
+            </div>
           </div>
         </div>
       `).join('');
     }
+    checkCrossRanch();
+  }
 
-    async function uploadFoto(fileInputId, prefix) {
-      const input = document.getElementById(fileInputId);
-      if (!input || !input.files || !input.files[0]) return null;
-      const file = input.files[0];
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `${prefix}_${Date.now()}.${ext}`;
+  // =========================================================================
+  // ALTA DE TRACTORES CON ID AUTOMÁTICO + GENERADOR E IMPRESIÓN QR
+  // =========================================================================
+  async function registrarTractorQR() {
+    const modelo = document.getElementById('trc-modelo').value.trim();
+    const serie = document.getElementById('trc-serie').value.trim();
+    const tanque = parseFloat(document.getElementById('trc-tanque').value) || null;
+    const rancho = document.getElementById('trc-rancho').value;
+    const msg = document.getElementById('trc-msg');
 
-      const { error } = await db.storage.from('evidencias').upload(path, file);
-      if (error) return null;
-
-      const { data } = db.storage.from('evidencias').getPublicUrl(path);
-      return data.publicUrl;
+    if (!modelo) {
+      showMsg(msg, 'Escribe el modelo del tractor.', 'alert-err');
+      return;
     }
 
-    async function crearTicketMantenimiento() {
-      const id_tractor = document.getElementById('mnt-tractor').value;
-      const id_rancho_reporte = document.getElementById('mnt-rancho').value;
-      const prioridad = document.getElementById('mnt-prioridad').value;
-      const descripcion_falla = document.getElementById('mnt-falla').value.trim();
-      const msg = document.getElementById('mnt-sol-msg');
+    const { data, error } = await db
+      .from('tractores')
+      .insert([{
+        modelo,
+        serie: serie || null,
+        capacidad_tanque: tanque,
+        id_rancho_base: rancho,
+        creado_por: currentUser.id_usuario
+      }])
+      .select()
+      .single();
 
-      if (!id_tractor || !descripcion_falla) {
-        showMsg(msg, 'Selecciona el tractor y describe la falla.', 'notice-red');
-        return;
-      }
-
-      const { data: ticket, error } = await db
-        .from('servicios_mantenimiento')
-        .insert([{
-          id_tractor,
-          id_rancho_reporte,
-          prioridad,
-          descripcion_falla,
-          id_usuario_solicita: currentUser.id_usuario
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        showMsg(msg, 'Error al crear reporte: ' + error.message, 'notice-red');
-        return;
-      }
-
-      const fotoUrl = await uploadFoto('mnt-foto-inicial', `ini_${ticket.id_servicio}`);
-      if (fotoUrl) {
-        await db.from('evidencias_servicio').insert([{
-          id_servicio: ticket.id_servicio,
-          etapa: 'PETICION_INICIAL',
-          url_imagen: fotoUrl,
-          subido_por: currentUser.id_usuario
-        }]);
-      }
-
-      document.getElementById('mnt-falla').value = '';
-      document.getElementById('mnt-foto-inicial').value = '';
-      showMsg(msg, `✅ Ticket #${ticket.id_servicio} enviado a taller.`, 'notice-green');
-      await loadTicketsMantenimiento();
+    if (error) {
+      showMsg(msg, 'Error al registrar: ' + error.message, 'alert-err');
+      return;
     }
 
-    async function loadTicketsMantenimiento() {
-      const { data: tickets, error } = await db
-        .from('servicios_mantenimiento')
-        .select('*, evidencias_servicio(*)')
-        .order('fecha_solicitud', { ascending: false });
+    document.getElementById('trc-modelo').value = '';
+    document.getElementById('trc-serie').value = '';
+    document.getElementById('trc-tanque').value = '';
+    showMsg(msg, `✅ Unidad registrada con folio único: ${data.id_tractor}. Lista para imprimir.`, 'alert-info');
 
-      if (error || !tickets) return;
+    await loadTractores();
+    renderQREtiqueta(data);
+  }
 
-      const abiertos = tickets.filter(t => t.estatus !== 'FINALIZADO');
-      const cerrados = tickets.filter(t => t.estatus === 'FINALIZADO');
-      document.getElementById('kpi-abiertos').textContent = abiertos.length;
+  function verQRDeTractor(idTractor) {
+    const t = tractoresCache.find(x => x.id_tractor === idTractor);
+    if (t) renderQREtiqueta(t);
+  }
 
-      const misBox = document.getElementById('lista-mis-tickets');
-      misBox.innerHTML = tickets.length ? tickets.map(t => renderTicketCard(t, false)).join('')
-        : '<p style="font-size:13px; color:var(--text-muted);">Sin reportes registrados.</p>';
+  function verYImprimirQR(idTractor) {
+    const t = tractoresCache.find(x => x.id_tractor === idTractor);
+    if (!t) return;
+    renderQREtiqueta(t);
+    setTimeout(() => imprimirEtiquetaQR(), 250);
+  }
 
-      const abBox = document.getElementById('lista-taller-abiertos');
-      abBox.innerHTML = abiertos.length ? abiertos.map(t => renderTicketCard(t, true)).join('')
-        : '<p style="font-size:13px; color:var(--text-muted);">🎉 No hay fallas pendientes en taller.</p>';
+  function renderQREtiqueta(tractor) {
+    lastGeneratedTractor = tractor;
+    const box = document.getElementById('qr-output-box');
+    box.classList.remove('hidden');
+    document.getElementById('qr-lbl-id').textContent = tractor.id_tractor;
+    document.getElementById('qr-lbl-modelo').textContent = tractor.modelo;
+    document.getElementById('qr-lbl-serie').textContent = tractor.serie ? 'Serie: ' + tractor.serie : '';
+    document.getElementById('qr-lbl-rancho').textContent = 'BASE: ' + (RANCHOS_MAP[tractor.id_rancho_base] || tractor.id_rancho_base);
 
-      const cerBox = document.getElementById('lista-taller-cerrados');
-      cerBox.innerHTML = cerrados.length ? cerrados.map(t => renderTicketCard(t, false)).join('')
-        : '<p style="font-size:13px; color:var(--text-muted);">Aún no hay reparaciones cerradas.</p>';
+    const canvas = document.getElementById('qr-canvas');
+    QRCode.toCanvas(canvas, tractor.id_tractor, { width: 210, margin: 2 });
+    box.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function buildEtiquetaDataURL() {
+    if (!lastGeneratedTractor) return null;
+    const srcCanvas = document.getElementById('qr-canvas');
+    const out = document.createElement('canvas');
+    out.width = 340;
+    out.height = 420;
+    const ctx = out.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.strokeStyle = '#1e4620';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(8, 8, out.width - 16, out.height - 16);
+
+    ctx.fillStyle = '#1e4620';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('AGROFLEET QR — ' + (RANCHOS_MAP[lastGeneratedTractor.id_rancho_base] || ''), 170, 42);
+
+    ctx.drawImage(srcCanvas, 65, 58, 210, 210);
+
+    ctx.fillStyle = '#1e4620';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText(lastGeneratedTractor.id_tractor, 170, 315);
+
+    ctx.fillStyle = '#333333';
+    ctx.font = '600 16px sans-serif';
+    ctx.fillText(lastGeneratedTractor.modelo.slice(0, 30), 170, 348);
+
+    if (lastGeneratedTractor.serie) {
+      ctx.fillStyle = '#666666';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('Serie: ' + lastGeneratedTractor.serie.slice(0, 28), 170, 374);
     }
 
-    function renderTicketCard(t, canAttend) {
-      const badgeClass = t.estatus === 'FINALIZADO' ? 'pill-green' : (t.prioridad === 'URGENTE' ? 'pill-red' : 'pill-amber');
-      const fotos = (t.evidencias_servicio || []).map(f =>
-        `<a href="${f.url_imagen}" target="_blank" style="font-size:12px; font-weight:700; color:var(--primary); display:inline-block; margin-right:10px; margin-top:6px;">📷 Ver foto (${f.etapa === 'PETICION_INICIAL' ? 'Inicial' : 'Final'})</a>`
-      ).join('');
+    return out.toDataURL('image/png');
+  }
 
-      return `
-        <div class="item-box">
-          <div class="item-top">
-            <span class="item-title">#${t.id_servicio} — ${t.id_tractor}</span>
-            <span class="pill ${badgeClass}">${t.estatus} (${t.prioridad})</span>
-          </div>
-          <p style="font-size:13px; margin:4px 0;">${t.descripcion_falla}</p>
-          <div class="item-meta">
-            Rancho: ${RANCHOS_MAP[t.id_rancho_reporte] || 'N/A'} | ${new Date(t.fecha_solicitud).toLocaleDateString('es-MX')}
-          </div>
-          ${t.trabajo_realizado ? `<div style="font-size:12px; color:var(--primary); margin-top:4px;"><strong>Solución:</strong> ${t.trabajo_realizado}</div>` : ''}
-          ${fotos}
-          ${canAttend ? `<button class="btn btn-green btn-mini" style="margin-top:8px;" onclick="abrirAtencionTicket(${t.id_servicio}, '${t.id_tractor}', '${t.descripcion_falla.replace(/'/g, '')}')">Atender / Cerrar</button>` : ''}
-        </div>
-      `;
+  function imprimirEtiquetaQR() {
+    if (!lastGeneratedTractor) return;
+    const imgData = buildEtiquetaDataURL();
+    const printWin = window.open('', '_blank', 'width=420,height=560');
+    if (printWin) {
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <title>Imprimir QR — ${lastGeneratedTractor.id_tractor}</title>
+          <style>
+            body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; }
+            img { width: 300px; height: auto; }
+            @media print { @page { margin: 8mm; } }
+          </style>
+        </head>
+        <body>
+          <img src="${imgData}" onload="window.print(); window.close();" />
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    } else {
+      // Respaldo si el navegador móvil bloquea ventanas emergentes
+      window.print();
+    }
+  }
+
+  function descargarEtiquetaQR() {
+    const imgData = buildEtiquetaDataURL();
+    if (!imgData) return;
+    const link = document.createElement('a');
+    link.download = `QR_${lastGeneratedTractor.id_tractor}.png`;
+    link.href = imgData;
+    link.click();
+  }
+
+  // =========================================================================
+  // DIÉSEL Y DETECCIÓN DE CARGAS CRUZADAS ENTRE RANCHOS
+  // =========================================================================
+  function checkCrossRanch() {
+    const idTrc = document.getElementById('diesel-tractor').value;
+    const ranchoCarga = document.getElementById('diesel-rancho-carga').value;
+    const alertBox = document.getElementById('cross-ranch-alert');
+
+    const trc = tractoresCache.find(t => t.id_tractor === idTrc);
+    if (!trc || trc.id_rancho_base === ranchoCarga) {
+      alertBox.classList.add('hidden');
+      return;
     }
 
-    function abrirAtencionTicket(id, tractor, falla) {
-      document.getElementById('card-cerrar-ticket').classList.remove('hidden');
-      document.getElementById('edit-ticket-id').textContent = id;
-      document.getElementById('edit-ticket-id').dataset.id = id;
-      document.getElementById('edit-ticket-info').textContent = `${tractor}: ${falla}`;
-      document.getElementById('card-cerrar-ticket').scrollIntoView({ behavior: 'smooth' });
+    alertBox.innerHTML = `🔄 <strong>Préstamo / Carga Cruzada:</strong> Este tractor pertenece a <strong>${RANCHOS_MAP[trc.id_rancho_base]}</strong> y está cargando diésel en <strong>${RANCHOS_MAP[ranchoCarga]}</strong>.`;
+    alertBox.classList.remove('hidden');
+  }
+
+  async function registrarDiesel() {
+    const id_tractor = document.getElementById('diesel-tractor').value;
+    const id_rancho_carga = document.getElementById('diesel-rancho-carga').value;
+    const litros = parseFloat(document.getElementById('diesel-litros').value);
+    const horometro = parseFloat(document.getElementById('diesel-horometro').value) || null;
+    const actividad = document.getElementById('diesel-actividad').value;
+    const msg = document.getElementById('diesel-msg');
+
+    if (!id_tractor || !litros || litros <= 0) {
+      showMsg(msg, 'Selecciona un tractor e ingresa los litros válidos.', 'alert-err');
+      return;
     }
 
-    function cancelarEdicionTicket() {
-      document.getElementById('card-cerrar-ticket').classList.add('hidden');
+    const { error } = await db.from('cargas_diesel').insert([{
+      id_tractor,
+      id_rancho_carga,
+      litros,
+      horometro,
+      actividad,
+      id_usuario_diesel: currentUser.id_usuario
+    }]);
+
+    if (error) {
+      showMsg(msg, 'Error al guardar carga: ' + error.message, 'alert-err');
+      return;
     }
 
-    function toggleMotivoEspera() {
-      const est = document.getElementById('edit-estatus').value;
-      document.getElementById('box-motivo-espera').classList.toggle('hidden', est !== 'EN_ESPERA');
+    document.getElementById('diesel-litros').value = '';
+    document.getElementById('diesel-horometro').value = '';
+    showMsg(msg, `✅ Carga de ${litros} L registrada para ${id_tractor}.`, 'alert-info');
+    await loadDieselHistory();
+  }
+
+  async function loadDieselHistory() {
+    const { data, error } = await db
+      .from('vista_cargas_detallada')
+      .select('*')
+      .order('fecha_hora', { ascending: false })
+      .limit(30);
+
+    const box = document.getElementById('lista-diesel');
+    if (error || !data) {
+      box.innerHTML = '<p style="font-size:13px; color:var(--gris);">Sin registros disponibles.</p>';
+      return;
     }
 
-    async function guardarCierreTicket() {
-      const id = document.getElementById('edit-ticket-id').dataset.id;
-      const estatus = document.getElementById('edit-estatus').value;
-      const motivo_espera = estatus === 'EN_ESPERA' ? document.getElementById('edit-motivo').value : null;
-      const trabajo_realizado = document.getElementById('edit-trabajo').value.trim();
-      const msg = document.getElementById('taller-msg');
-
-      if (!trabajo_realizado) {
-        showMsg(msg, 'Describe el trabajo o diagnóstico realizado.', 'notice-red');
-        return;
-      }
-
-      const updatePayload = {
-        estatus,
-        motivo_espera,
-        trabajo_realizado,
-        id_usuario_repara: currentUser.id_usuario,
-        fecha_cierre: estatus === 'FINALIZADO' ? new Date().toISOString() : null
-      };
-
-      const { error } = await db
-        .from('servicios_mantenimiento')
-        .update(updatePayload)
-        .eq('id_servicio', id);
-
-      if (error) {
-        showMsg(msg, 'Error al actualizar: ' + error.message, 'notice-red');
-        return;
-      }
-
-      const fotoUrl = await uploadFoto('edit-foto-final', `fin_${id}`);
-      if (fotoUrl) {
-        await db.from('evidencias_servicio').insert([{
-          id_servicio: id,
-          etapa: 'REPARACION_FINAL',
-          url_imagen: fotoUrl,
-          subido_por: currentUser.id_usuario
-        }]);
-      }
-
-      document.getElementById('edit-trabajo').value = '';
-      document.getElementById('edit-foto-final').value = '';
-      cancelarEdicionTicket();
-      await loadTicketsMantenimiento();
-    }
-
-    function toggleScanner(target) {
-      const readerId = target === 'diesel' ? 'qr-reader-diesel' : 'qr-reader-mnt';
-      const el = document.getElementById(readerId);
-
-      if (activeScannerTarget === target) {
-        stopScanner();
-        return;
-      }
-      stopScanner();
-
-      activeScannerTarget = target;
-      el.classList.remove('hidden');
-      html5QrScanner = new Html5Qrcode(readerId);
-
-      html5QrScanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 220, height: 220 } },
-        (decodedText) => {
-          const code = decodedText.trim().toUpperCase();
-          const selectId = target === 'diesel' ? 'diesel-tractor' : 'mnt-tractor';
-          const sel = document.getElementById(selectId);
-          const exists = Array.from(sel.options).some(o => o.value === code);
-          if (exists) {
-            sel.value = code;
-            if (target === 'diesel') checkCrossRanch();
-            alert('✅ Tractor escaneado: ' + code);
-          } else {
-            alert('⚠️ El código ' + code + ' no está registrado en el catálogo de tractores.');
-          }
-          stopScanner();
-        },
-        () => {}
-      ).catch(() => {
-        alert('No se pudo abrir la cámara. Verifica los permisos del navegador.');
-        stopScanner();
-      });
-    }
-
-    function stopScanner() {
-      if (html5QrScanner) {
-        html5QrScanner.stop().catch(() => {});
-        html5QrScanner = null;
-      }
-      ['qr-reader-diesel', 'qr-reader-mnt'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
-      });
-      activeScannerTarget = null;
-    }
-
-    function showMsg(el, text, cls) {
-      el.textContent = text;
-      el.className = 'notice ' + cls;
-      el.classList.remove('hidden');
-      setTimeout(() => el.classList.add('hidden'), 4500);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      const saved = localStorage.getItem('agrofleet_session');
-      if (saved) {
-        try {
-          currentUser = JSON.parse(saved);
-          initSessionUI();
-        } catch (e) {
-          localStorage.removeItem('agrofleet_session');
-        }
-      }
+    let totalLitros = 0;
+    let totalPrestamos = 0;
+    data.forEach(c => {
+      totalLitros += Number(c.litros || 0);
+      if (c.es_prestamo_entre_ranchos) totalPrestamos++;
     });
-  </script>
+    document.getElementById('kpi-litros').textContent = totalLitros.toFixed(1) + ' L';
+    document.getElementById('kpi-prestamos').textContent = totalPrestamos;
+
+    const filtrados = currentUser.rol === 'DIESEL' && currentUser.id_rancho
+      ? data.filter(c => c.rancho_donde_cargo === RANCHOS_MAP[currentUser.id_rancho])
+      : data;
+
+    if (!filtrados.length) {
+      box.innerHTML = '<p style="font-size:13px; color:var(--gris);">Aún no hay cargas registradas aquí.</p>';
+      return;
+    }
+
+    box.innerHTML = filtrados.map(c => `
+      <div class="list-item">
+        <div class="list-top">
+          <strong>${c.id_tractor} (${c.litros} L)</strong>
+          ${c.es_prestamo_entre_ranchos
+            ? `<span class="badge badge-gold">Préstamo: ${c.rancho_dueno_tractor} ➔ ${c.rancho_donde_cargo}</span>`
+            : `<span class="badge badge-green">${c.rancho_donde_cargo}</span>`}
+        </div>
+        <div style="font-size:12px; color:var(--gris);">
+          Actividad: <strong>${c.actividad}</strong> | Horómetro: ${c.horometro || '-'}
+        </div>
+        <div style="font-size:11px; color:var(--gris); margin-top:4px;">
+          ${new Date(c.fecha_hora).toLocaleString('es-MX')} — Por: ${c.despachador}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // =========================================================================
+  // MANTENIMIENTO: SOLICITUD (ROL 2) Y TALLER (ROL 3)
+  // =========================================================================
+  async function uploadFoto(fileInputId, prefix) {
+    const input = document.getElementById(fileInputId);
+    if (!input || !input.files || !input.files[0]) return null;
+    const file = input.files[0];
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `${prefix}_${Date.now()}.${ext}`;
+
+    const { error } = await db.storage.from('evidencias').upload(path, file);
+    if (error) return null;
+
+    const { data } = db.storage.from('evidencias').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function crearTicketMantenimiento() {
+    const id_tractor = document.getElementById('mnt-tractor').value;
+    const id_rancho_reporte = document.getElementById('mnt-rancho').value;
+    const prioridad = document.getElementById('mnt-prioridad').value;
+    const descripcion_falla = document.getElementById('mnt-falla').value.trim();
+    const msg = document.getElementById('mnt-sol-msg');
+
+    if (!id_tractor || !descripcion_falla) {
+      showMsg(msg, 'Selecciona el tractor y describe la falla.', 'alert-err');
+      return;
+    }
+
+    const { data: ticket, error } = await db
+      .from('servicios_mantenimiento')
+      .insert([{
+        id_tractor,
+        id_rancho_reporte,
+        prioridad,
+        descripcion_falla,
+        id_usuario_solicita: currentUser.id_usuario
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      showMsg(msg, 'Error al crear reporte: ' + error.message, 'alert-err');
+      return;
+    }
+
+    const fotoUrl = await uploadFoto('mnt-foto-inicial', `ini_${ticket.id_servicio}`);
+    if (fotoUrl) {
+      await db.from('evidencias_servicio').insert([{
+        id_servicio: ticket.id_servicio,
+        etapa: 'PETICION_INICIAL',
+        url_imagen: fotoUrl,
+        subido_por: currentUser.id_usuario
+      }]);
+    }
+
+    document.getElementById('mnt-falla').value = '';
+    document.getElementById('mnt-foto-inicial').value = '';
+    showMsg(msg, `✅ Ticket #${ticket.id_servicio} enviado a taller.`, 'alert-info');
+    await loadTicketsMantenimiento();
+  }
+
+  async function loadTicketsMantenimiento() {
+    const { data: tickets, error } = await db
+      .from('servicios_mantenimiento')
+      .select('*, evidencias_servicio(*)')
+      .order('fecha_solicitud', { ascending: false });
+
+    if (error || !tickets) return;
+
+    const abiertos = tickets.filter(t => t.estatus !== 'FINALIZADO');
+    const cerrados = tickets.filter(t => t.estatus === 'FINALIZADO');
+    document.getElementById('kpi-abiertos').textContent = abiertos.length;
+
+    const misBox = document.getElementById('lista-mis-tickets');
+    misBox.innerHTML = tickets.length ? tickets.map(t => renderTicketCard(t, false)).join('')
+      : '<p style="font-size:13px; color:var(--gris);">Sin reportes registrados.</p>';
+
+    const abBox = document.getElementById('lista-taller-abiertos');
+    abBox.innerHTML = abiertos.length ? abiertos.map(t => renderTicketCard(t, true)).join('')
+      : '<p style="font-size:13px; color:var(--gris);">🎉 No hay fallas pendientes en taller.</p>';
+
+    const cerBox = document.getElementById('lista-taller-cerrados');
+    cerBox.innerHTML = cerrados.length ? cerrados.map(t => renderTicketCard(t, false)).join('')
+      : '<p style="font-size:13px; color:var(--gris);">Aún no hay reparaciones cerradas.</p>';
+  }
+
+  function renderTicketCard(t, canAttend) {
+    const badgeClass = t.estatus === 'FINALIZADO' ? 'badge-green' : (t.prioridad === 'URGENTE' ? 'badge-terra' : 'badge-gold');
+    const fotos = (t.evidencias_servicio || []).map(f =>
+      `<a href="${f.url_imagen}" target="_blank" style="font-size:12px; color:var(--verde-oscuro); display:inline-block; margin-right:8px; margin-top:4px;">📷 Ver foto (${f.etapa === 'PETICION_INICIAL' ? 'Inicial' : 'Final'})</a>`
+    ).join('');
+
+    return `
+      <div class="list-item">
+        <div class="list-top">
+          <strong>#${t.id_servicio} — ${t.id_tractor}</strong>
+          <span class="badge ${badgeClass}">${t.estatus} (${t.prioridad})</span>
+        </div>
+        <p style="font-size:13px; margin:4px 0;">${t.descripcion_falla}</p>
+        <div style="font-size:12px; color:var(--gris);">
+          Rancho: ${RANCHOS_MAP[t.id_rancho_reporte] || 'N/A'} | ${new Date(t.fecha_solicitud).toLocaleDateString('es-MX')}
+        </div>
+        ${t.trabajo_realizado ? `<div style="font-size:12px; color:var(--verde-oscuro); margin-top:4px;"><strong>Solución:</strong> ${t.trabajo_realizado}</div>` : ''}
+        ${fotos}
+        ${canAttend ? `<button class="btn btn-primary btn-sm" onclick="abrirAtencionTicket(${t.id_servicio}, '${t.id_tractor}', '${t.descripcion_falla.replace(/'/g, '')}')">Atender / Cerrar</button>` : ''}
+      </div>
+    `;
+  }
+
+  function abrirAtencionTicket(id, tractor, falla) {
+    document.getElementById('card-cerrar-ticket').classList.remove('hidden');
+    document.getElementById('edit-ticket-id').textContent = id;
+    document.getElementById('edit-ticket-id').dataset.id = id;
+    document.getElementById('edit-ticket-info').textContent = `${tractor}: ${falla}`;
+    document.getElementById('card-cerrar-ticket').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function cancelarEdicionTicket() {
+    document.getElementById('card-cerrar-ticket').classList.add('hidden');
+  }
+
+  function toggleMotivoEspera() {
+    const est = document.getElementById('edit-estatus').value;
+    document.getElementById('box-motivo-espera').classList.toggle('hidden', est !== 'EN_ESPERA');
+  }
+
+  async function guardarCierreTicket() {
+    const id = document.getElementById('edit-ticket-id').dataset.id;
+    const estatus = document.getElementById('edit-estatus').value;
+    const motivo_espera = estatus === 'EN_ESPERA' ? document.getElementById('edit-motivo').value : null;
+    const trabajo_realizado = document.getElementById('edit-trabajo').value.trim();
+    const msg = document.getElementById('taller-msg');
+
+    if (!trabajo_realizado) {
+      showMsg(msg, 'Describe el trabajo o diagnóstico realizado.', 'alert-err');
+      return;
+    }
+
+    const updatePayload = {
+      estatus,
+      motivo_espera,
+      trabajo_realizado,
+      id_usuario_repara: currentUser.id_usuario,
+      fecha_cierre: estatus === 'FINALIZADO' ? new Date().toISOString() : null
+    };
+
+    const { error } = await db
+      .from('servicios_mantenimiento')
+      .update(updatePayload)
+      .eq('id_servicio', id);
+
+    if (error) {
+      showMsg(msg, 'Error al actualizar: ' + error.message, 'alert-err');
+      return;
+    }
+
+    const fotoUrl = await uploadFoto('edit-foto-final', `fin_${id}`);
+    if (fotoUrl) {
+      await db.from('evidencias_servicio').insert([{
+        id_servicio: id,
+        etapa: 'REPARACION_FINAL',
+        url_imagen: fotoUrl,
+        subido_por: currentUser.id_usuario
+      }]);
+    }
+
+    document.getElementById('edit-trabajo').value = '';
+    document.getElementById('edit-foto-final').value = '';
+    cancelarEdicionTicket();
+    await loadTicketsMantenimiento();
+  }
+
+  // =========================================================================
+  // ESCÁNER QR CON CÁMARA DEL TELÉFONO
+  // =========================================================================
+  function toggleScanner(target) {
+    const readerId = target === 'diesel' ? 'qr-reader-diesel' : 'qr-reader-mnt';
+    const el = document.getElementById(readerId);
+
+    if (activeScannerTarget === target) {
+      stopScanner();
+      return;
+    }
+    stopScanner();
+
+    activeScannerTarget = target;
+    el.classList.remove('hidden');
+    html5QrScanner = new Html5Qrcode(readerId);
+
+    html5QrScanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => {
+        const code = decodedText.trim().toUpperCase();
+        const selectId = target === 'diesel' ? 'diesel-tractor' : 'mnt-tractor';
+        const sel = document.getElementById(selectId);
+        const exists = Array.from(sel.options).some(o => o.value === code);
+        if (exists) {
+          sel.value = code;
+          if (target === 'diesel') checkCrossRanch();
+          alert('✅ Tractor escaneado: ' + code);
+        } else {
+          alert('⚠️ El código ' + code + ' no está registrado en el catálogo de tractores.');
+        }
+        stopScanner();
+      },
+      () => {}
+    ).catch(() => {
+      alert('No se pudo abrir la cámara. Verifica los permisos del navegador.');
+      stopScanner();
+    });
+  }
+
+  function stopScanner() {
+    if (html5QrScanner) {
+      html5QrScanner.stop().catch(() => {});
+      html5QrScanner = null;
+    }
+    ['qr-reader-diesel', 'qr-reader-mnt'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
+    });
+    activeScannerTarget = null;
+  }
+
+  function showMsg(el, text, cls) {
+    el.textContent = text;
+    el.className = 'alert ' + cls;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 4500);
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('agrofleet_session');
+    if (saved) {
+      try {
+        currentUser = JSON.parse(saved);
+        initSessionUI();
+      } catch (e) {
+        localStorage.removeItem('agrofleet_session');
+      }
+    }
+  });
+</script>
 </body>
 </html>
