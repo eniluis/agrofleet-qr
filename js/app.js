@@ -37,6 +37,7 @@ import {
     openTicketForRepair,
     closeRole3Panel,
     setResolutionStatus,
+    togglePreventiveTag,
     submitRepairClosure
 } from './maintenance.js';
 import {
@@ -167,6 +168,7 @@ Object.assign(window, {
     openTicketForRepair,
     closeRole3Panel,
     setResolutionStatus,
+    togglePreventiveTag,
     submitRepairClosure: () => submitRepairClosure(syncAllFromSupabase),
     renderHistoryScreen,
     openAdminEditFuel,

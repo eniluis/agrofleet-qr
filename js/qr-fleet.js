@@ -1,6 +1,7 @@
 import { RANCH_NAMES, state } from './config.js';
 import { sbFetch, enqueueOfflineAction, showToast, handleAppError } from './api.js';
 import { updateCrossRanchBanner, applySmartTractorContext } from './diesel.js';
+
 let html5QrCodeInstance = null;
 let cameraActive = false;
 let editingTractorId = null;
@@ -42,6 +43,88 @@ export function renderQuickTractors() {
     selectTractor(state.selectedTractorId, false);
 }
 
+function getLastServiceHorometer(tractorId, tagCode) {
+    // Si se realizó un servicio mayor de 1000h, también reinicia los contadores de 500h y 300h
+    const validTags = tagCode === '300' ? ['[PM-300H]', '[PM-1000H]'] :
+        tagCode === '500' ? ['[PM-500H]', '[PM-1000H]'] : ['[PM-1000H]'];
+
+    const ticket = state.dbTickets.find(t =>
+        t.id_tractor === tractorId &&
+        t.estatus === 'FINALIZADO' &&
+        t.trabajo_realizado &&
+        validTags.some(tag => t.trabajo_realizado.includes(tag))
+    );
+
+    if (!ticket) return null;
+
+    const match = ticket.trabajo_realizado.match(/\[HORO:([\d.]+)\]/);
+    if (match) return parseFloat(match[1]);
+
+    const fuelAtTime = state.dbFuelLogs.find(l =>
+        l.id_tractor === tractorId &&
+        l.horometro !== null &&
+        new Date(l.fecha_hora) <= new Date(ticket.fecha_cierre || ticket.fecha_solicitud)
+    );
+    return fuelAtTime ? parseFloat(fuelAtTime.horometro) : null;
+}
+
+export function renderPreventiveSemaphores(tractorId) {
+    const box = document.getElementById('preventive-pm-box');
+    const grid = document.getElementById('pm-badges-grid');
+    const horoLabel = document.getElementById('pm-current-horo');
+    if (!box || !grid) return;
+
+    const logs = state.dbFuelLogs.filter(
+        l => l.id_tractor === tractorId && l.horometro !== null && !isNaN(parseFloat(l.horometro))
+    );
+
+    if (logs.length === 0) {
+        box.classList.add('hidden');
+        return;
+    }
+
+    const currentHoro = parseFloat(logs[0].horometro);
+    box.classList.remove('hidden');
+    if (horoLabel) horoLabel.textContent = `Actual: ${currentHoro} hrs`;
+
+    const rules = [
+        { code: '300', label: 'Motor 300h', interval: 300, warn: 30 },
+        { code: '500', label: 'Diésel/Aire 500h', interval: 500, warn: 40 },
+        { code: '1000', label: 'Hidr/Sec 1000h', interval: 1000, warn: 50 }
+    ];
+
+    grid.innerHTML = rules.map(r => {
+        const lastServiceHoro = getLastServiceHorometer(tractorId, r.code);
+        let remaining;
+
+        if (lastServiceHoro !== null) {
+            const elapsed = currentHoro - lastServiceHoro;
+            remaining = Math.round((r.interval - elapsed) * 10) / 10;
+        } else {
+            const nextDue = (Math.floor(currentHoro / r.interval) + 1) * r.interval;
+            remaining = Math.round((nextDue - currentHoro) * 10) / 10;
+        }
+
+        let badgeClass = 'bg-emerald-50 border-emerald-200 text-emerald-900';
+        let statusText = `Faltan ${remaining}h`;
+
+        if (remaining <= 0) {
+            badgeClass = 'bg-red-100 border-red-400 text-red-900 animate-pulse';
+            statusText = `Vencido ${Math.abs(remaining)}h`;
+        } else if (remaining <= r.warn) {
+            badgeClass = 'bg-amber-100 border-amber-400 text-amber-950';
+            statusText = `⚠️ En ${remaining}h`;
+        }
+
+        return `
+      <div class="rounded-xl p-2 border ${badgeClass} text-center">
+        <span class="block text-[10px] font-extrabold leading-tight">${r.label}</span>
+        <strong class="block text-[11px] font-black mt-0.5">${statusText}</strong>
+      </div>
+    `;
+    }).join('');
+}
+
 export function selectTractor(tractorId, reRenderButtons = true) {
     const tr = state.dbTractors.find(t => t.id_tractor.toUpperCase() === tractorId.toUpperCase());
     if (!tr) {
@@ -52,7 +135,7 @@ export function selectTractor(tractorId, reRenderButtons = true) {
     if (reRenderButtons) renderQuickTractors();
 
     const card = document.getElementById('selected-tractor-card');
-    card.classList.remove('hidden');
+    if (card) card.classList.remove('hidden');
 
     document.getElementById('ui-tractor-id').textContent = `#${tr.id_tractor}`;
     document.getElementById('ui-tractor-model').textContent = tr.modelo;
@@ -67,6 +150,7 @@ export function selectTractor(tractorId, reRenderButtons = true) {
 
     updateCrossRanchBanner();
     applySmartTractorContext(tr.id_tractor);
+    renderPreventiveSemaphores(tr.id_tractor);
 }
 
 export async function toggleRealCamera() {

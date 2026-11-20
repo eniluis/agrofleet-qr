@@ -1,295 +1,351 @@
 import { RANCH_NAMES, state } from './config.js';
-import { sbFetch, uploadImageToSupabaseStorage, enqueueOfflineAction, showToast, handleAppError } from './api.js';
+import { sbFetch, enqueueOfflineAction, showToast, handleAppError, uploadImageToSupabaseStorage } from './api.js';
+
+let selectedPreventiveTags = new Set();
+let localFaultPriority = 'NORMAL';
+let localResolutionStatus = 'FINALIZADO';
+let localRole2Photos = [];
+let localRole3Photos = [];
 
 export function setPriority(prio) {
-  state.selectedPriority = prio;
-  const btnN = document.getElementById('prio-normal');
-  const btnU = document.getElementById('prio-urgente');
-  if (prio === 'NORMAL') {
-    btnN.className = 'py-2.5 px-3 rounded-xl border-2 border-forest bg-emerald-50 text-forest font-extrabold text-xs transition';
-    btnU.className = 'py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition';
-  } else {
-    btnN.className = 'py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition';
-    btnU.className = 'py-2.5 px-3 rounded-xl border-2 border-red-600 bg-red-50 text-red-700 font-extrabold text-xs transition';
-  }
+    localFaultPriority = prio;
+    state.currentFaultPriority = prio;
+    const btnNorm = document.getElementById('prio-normal');
+    const btnUrg = document.getElementById('prio-urgente');
+    if (!btnNorm || !btnUrg) return;
+
+    if (prio === 'URGENTE') {
+        btnUrg.className = 'py-2.5 px-3 rounded-xl border-2 border-red-600 bg-red-600 text-white font-extrabold text-xs transition shadow-sm';
+        btnNorm.className = 'py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition';
+    } else {
+        btnNorm.className = 'py-2.5 px-3 rounded-xl border-2 border-forest bg-forest text-white font-extrabold text-xs transition shadow-sm';
+        btnUrg.className = 'py-2.5 px-3 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition';
+    }
 }
 
-export function handlePhotoUpload(event, targetRole) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const previewUrl = URL.createObjectURL(file);
-  if (targetRole === 'role2') {
-    state.role2DraftFiles.push({ previewUrl, fileObj: file });
-    renderDraftPhotos('role2');
-  } else {
-    state.role3DraftFiles.push({ previewUrl, fileObj: file });
-    renderDraftPhotos('role3');
-  }
-  event.target.value = '';
+export function togglePreventiveTag(code) {
+    const btn = document.getElementById(`pm-btn-${code}`);
+    if (!btn) return;
+
+    if (selectedPreventiveTags.has(code)) {
+        selectedPreventiveTags.delete(code);
+        btn.className = 'py-2 px-1.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-[10px] leading-tight text-center transition';
+    } else {
+        selectedPreventiveTags.add(code);
+        btn.className = 'py-2 px-1.5 rounded-xl border-2 border-emeraldAgro bg-emerald-100 text-forest font-extrabold text-[10px] leading-tight text-center transition';
+    }
+}
+
+function resetPreventiveTagsUI() {
+    selectedPreventiveTags.clear();
+    ['300', '500', '1000'].forEach(code => {
+        const btn = document.getElementById(`pm-btn-${code}`);
+        if (btn) {
+            btn.className = 'py-2 px-1.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-[10px] leading-tight text-center transition';
+        }
+    });
+}
+
+export async function handlePhotoUpload(event, targetRole) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+        const imageUrl = await uploadImageToSupabaseStorage(file, targetRole);
+        if (targetRole === 'role2') {
+            localRole2Photos.push(imageUrl);
+            renderDraftPhotoGrid('role2');
+        } else {
+            localRole3Photos.push(imageUrl);
+            renderDraftPhotoGrid('role3');
+        }
+    } catch (e) {
+        showToast('No se pudo procesar la imagen.', 'error');
+    }
+    event.target.value = '';
+}
+
+export function removeDraftPhoto(targetRole, index) {
+    if (targetRole === 'role2') {
+        localRole2Photos.splice(index, 1);
+        renderDraftPhotoGrid('role2');
+    } else {
+        localRole3Photos.splice(index, 1);
+        renderDraftPhotoGrid('role3');
+    }
 }
 
 export function renderDraftPhotos(targetRole) {
-  const isR2 = targetRole === 'role2';
-  const grid = document.getElementById(isR2 ? 'role2-photo-grid' : 'role3-photo-grid');
-  if (!grid) return;
-  const list = isR2 ? state.role2DraftFiles : state.role3DraftFiles;
-  const uploadLabel = grid.firstElementChild;
-  grid.innerHTML = '';
-  grid.appendChild(uploadLabel);
-
-  list.forEach((item, idx) => {
-    const div = document.createElement('div');
-    div.className = 'aspect-square rounded-xl overflow-hidden relative border border-stone-300 bg-stone-100';
-    div.innerHTML = `
-      <img src="${item.previewUrl}" class="w-full h-full object-cover" />
-      <button type="button" onclick="removeDraftPhoto('${targetRole}', ${idx})"
-        class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/75 text-white text-[10px] font-bold">✕</button>
-    `;
-    grid.appendChild(div);
-  });
+    if (!targetRole) {
+        renderDraftPhotoGrid('role2');
+        renderDraftPhotoGrid('role3');
+        return;
+    }
+    renderDraftPhotoGrid(targetRole);
 }
 
-export function removeDraftPhoto(targetRole, idx) {
-  if (targetRole === 'role2') {
-    state.role2DraftFiles.splice(idx, 1);
-    renderDraftPhotos('role2');
-  } else {
-    state.role3DraftFiles.splice(idx, 1);
-    renderDraftPhotos('role3');
-  }
+function renderDraftPhotoGrid(targetRole) {
+    const grid = document.getElementById(`${targetRole}-photo-grid`);
+    if (!grid) return;
+    const photos = targetRole === 'role2' ? localRole2Photos : localRole3Photos;
+    const borderColor = targetRole === 'role2' ?
+        'border-barnTerra/60 bg-orange-50/50 text-barnTerra' :
+        'border-emeraldAgro/60 bg-emerald-50/50 text-emeraldAgro';
+    const labelText = targetRole === 'role2' ? 'Tomar / Subir Foto' : 'Foto Reparación';
+
+    const thumbs = photos.map((src, idx) => `
+    <div class="relative aspect-square rounded-xl overflow-hidden border border-stone-300 bg-stone-100">
+      <img src="${src}" class="w-full h-full object-cover" />
+      <button type="button" onclick="removeDraftPhoto('${targetRole}', ${idx})"
+        class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/75 text-white text-[10px] font-bold flex items-center justify-center">✕</button>
+    </div>
+  `).join('');
+
+    grid.innerHTML = thumbs + `
+    <label class="aspect-square rounded-xl border-2 border-dashed ${borderColor} flex flex-col items-center justify-center cursor-pointer p-2 text-center">
+      <span class="text-lg">📷</span>
+      <span class="text-[10px] font-bold mt-1 leading-tight">${labelText}</span>
+      <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, '${targetRole}')" />
+    </label>
+  `;
 }
 
 export async function submitMaintenanceRequest(syncFn) {
-  if (!state.selectedTractorId) {
-    showToast('Selecciona o escanea un tractor primero.', 'error');
-    return;
-  }
-  const desc = document.getElementById('input-fault-desc').value.trim();
-  if (!desc) {
-    showToast('Escribe la descripción de la falla.', 'error');
-    return;
-  }
-
-  const btn = document.getElementById('btn-submit-fault');
-  btn.disabled = true;
-  btn.textContent = 'ENVIANDO REPORTE Y FOTOS...';
-
-  const payload = {
-    id_tractor: state.selectedTractorId,
-    id_rancho_reporte: document.getElementById('select-fault-rancho').value,
-    prioridad: state.selectedPriority,
-    descripcion_falla: desc,
-    id_usuario_solicita: state.currentUser.id_usuario,
-    estatus: 'PENDIENTE'
-  };
-
-  try {
-    if (state.isOnline) {
-      const inserted = await sbFetch('servicios_mantenimiento', {
-        method: 'POST',
-        headers: { Prefer: 'return=representation' },
-        body: JSON.stringify(payload)
-      });
-      const newServiceId = inserted[0].id_servicio;
-
-      for (const item of state.role2DraftFiles) {
-        const publicUrl = await uploadImageToSupabaseStorage(item.fileObj, `srv_${newServiceId}_init`);
-        await sbFetch('evidencias_servicio', {
-          method: 'POST',
-          body: JSON.stringify({
-            id_servicio: newServiceId,
-            etapa: 'PETICION_INICIAL',
-            url_imagen: publicUrl,
-            subido_por: state.currentUser.id_usuario
-          })
-        });
-      }
-
-      if (state.selectedPriority === 'URGENTE') {
-        await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(state.selectedTractorId)}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ estatus_operativo: 'EN_TALLER' })
-        });
-      }
-
-      if (syncFn) await syncFn(false);
-      showToast(`✔ Petición #${newServiceId} enviada al taller.`, 'success');
-    } else {
-      enqueueOfflineAction({ table: 'servicios_mantenimiento', payload });
-      showToast('⏳ Petición guardada en cola offline.', 'info');
+    if (!state.selectedTractorId) {
+        showToast('Selecciona o escanea un tractor primero.', 'error');
+        return;
+    }
+    const desc = document.getElementById('input-fault-desc').value.trim();
+    if (!desc) {
+        showToast('Describe la falla reportada.', 'error');
+        document.getElementById('input-fault-desc').focus();
+        return;
     }
 
-    document.getElementById('input-fault-desc').value = '';
-    state.role2DraftFiles = [];
-    renderDraftPhotos('role2');
-    renderRole2MyTickets();
-  } catch (err) {
-    handleAppError('Petición de mantenimiento', err);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'ENVIAR PETICIÓN AL TALLER';
-  }
+    const ranchoReporte = document.getElementById('select-fault-rancho').value;
+    const btn = document.getElementById('btn-submit-fault');
+    btn.disabled = true;
+    btn.textContent = 'ENVIANDO AL TALLER...';
+
+    const payload = {
+        id_tractor: state.selectedTractorId,
+        id_rancho_reporte: ranchoReporte,
+        prioridad: localFaultPriority || 'NORMAL',
+        descripcion_falla: desc,
+        estatus: 'PENDIENTE',
+        id_usuario_reporta: state.currentUser.id_usuario
+    };
+
+    try {
+        if (state.isOnline) {
+            const inserted = await sbFetch('servicios_mantenimiento', {
+                method: 'POST',
+                headers: { Prefer: 'return=representation' },
+                body: JSON.stringify(payload)
+            });
+            const newTicket = inserted && inserted[0];
+            if (newTicket && localRole2Photos.length > 0) {
+                const photoPayloads = localRole2Photos.map(img => ({
+                    id_servicio: newTicket.id_servicio,
+                    tipo_evidencia: 'FALLA_INICIAL',
+                    imagen_base64: img
+                }));
+                await sbFetch('evidencias_servicio', { method: 'POST', body: JSON.stringify(photoPayloads) });
+            }
+            if (syncFn) await syncFn(false);
+            showToast(`✔ Reporte de falla enviado al taller para #${state.selectedTractorId}.`, 'success');
+        } else {
+            enqueueOfflineAction({ table: 'servicios_mantenimiento', payload });
+            state.dbTickets.unshift({...payload, id_servicio: 'LOCAL', fecha_solicitud: new Date().toISOString() });
+            showToast('⏳ Sin señal: reporte guardado localmente.', 'info');
+        }
+
+        document.getElementById('input-fault-desc').value = '';
+        localRole2Photos = [];
+        renderDraftPhotoGrid('role2');
+        renderRole2MyTickets();
+    } catch (err) {
+        handleAppError('Envío de reporte', err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'ENVIAR PETICIÓN AL TALLER';
+    }
 }
 
 export function renderRole2MyTickets() {
-  const container = document.getElementById('role2-my-tickets-list');
-  if (!container || !state.currentUser) return;
-  const mine = state.dbTickets.filter(t => t.id_usuario_solicita === state.currentUser.id_usuario);
-  if (mine.length === 0) {
-    container.innerHTML = `<p class="text-xs text-stone-500 text-center py-2">Sin peticiones registradas aún.</p>`;
-    return;
-  }
-  container.innerHTML = mine.map(t => `
-    <div class="bg-creamSand rounded-xl p-2.5 border border-stone-200 text-xs space-y-1">
-      <div class="flex justify-between items-center">
-        <strong class="text-forest">Ticket #${t.id_servicio} · #${t.id_tractor}</strong>
-        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.estatus === 'FINALIZADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-barnTerra'}">${t.estatus}</span>
+    const list = document.getElementById('role2-my-tickets-list');
+    if (!list || !state.currentUser) return;
+
+    const mine = (state.dbTickets || []).filter(t =>
+        state.currentUser.rol === 'ADMIN' || t.id_usuario_reporta === state.currentUser.id_usuario
+    ).slice(0, 15);
+
+    if (mine.length === 0) {
+        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-2">Aún no hay peticiones enviadas.</p>`;
+        return;
+    }
+
+    list.innerHTML = mine.map(t => {
+                const statusBadge = t.estatus === 'FINALIZADO' ?
+                    'bg-emerald-100 text-emerald-800' :
+                    t.estatus === 'EN_ESPERA' ?
+                    'bg-amber-100 text-barnTerra' :
+                    'bg-red-100 text-red-800';
+
+                return `
+      <div class="bg-creamSand rounded-xl p-2.5 border border-stone-200 text-xs space-y-1">
+        <div class="flex items-center justify-between">
+          <strong class="text-forest font-extrabold">#${t.id_tractor} · Ticket #${t.id_servicio}</strong>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${statusBadge}">${t.estatus}</span>
+        </div>
+        <p class="text-stone-700">${t.descripcion_falla}</p>
+        ${t.trabajo_realizado ? `<p class="text-[11px] text-emeraldAgro font-semibold">✔ Taller: ${t.trabajo_realizado}</p>` : ''}
       </div>
-      <p class="text-stone-700">${t.descripcion_falla}</p>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 export function renderRole3TicketList() {
-  const container = document.getElementById('role3-tickets-list');
+  const list = document.getElementById('role3-tickets-list');
   const badge = document.getElementById('role3-open-badge');
-  if (!container) return;
+  if (!list) return;
 
-  const openTickets = state.dbTickets.filter(t => t.estatus !== 'FINALIZADO');
-  badge.textContent = `${openTickets.length} abierta${openTickets.length === 1 ? '' : 's'}`;
+  const openTickets = (state.dbTickets || []).filter(t => t.estatus !== 'FINALIZADO');
+  if (badge) badge.textContent = `${openTickets.length} abierta${openTickets.length === 1 ? '' : 's'}`;
 
   if (openTickets.length === 0) {
-    container.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center border border-stone-200 text-xs text-stone-500">No hay peticiones abiertas en taller.</div>`;
+    list.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center border border-stone-200 text-xs text-stone-500">✔ No hay fallas pendientes por reparar en este momento.</div>`;
     return;
   }
 
-  container.innerHTML = openTickets.map(t => {
-    const tr = state.dbTractors.find(x => x.id_tractor === t.id_tractor);
-    const isSel = state.activeTicketIdForRole3 === t.id_servicio;
+  list.innerHTML = openTickets.map(t => {
+    const isUrg = t.prioridad === 'URGENTE';
     return `
-      <button type="button" onclick="openTicketForRepair(${t.id_servicio})"
-        class="w-full text-left bg-white hover:bg-emerald-50/40 rounded-2xl p-3.5 border-2 ${isSel ? 'border-emeraldAgro' : 'border-stone-200'} shadow-sm space-y-1.5 transition">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-forest text-white">#${t.id_tractor} · Ticket #${t.id_servicio}</span>
-          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.prioridad === 'URGENTE' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-barnTerra'}">
-            ${t.estatus === 'EN_ESPERA' ? `⏳ ${t.motivo_espera}` : t.prioridad}
-          </span>
+      <div class="bg-white rounded-2xl p-3.5 border ${isUrg ? 'border-red-400' : 'border-stone-200'} shadow-sm space-y-2 text-xs">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5">
+            <strong class="text-forest font-extrabold text-sm">#${t.id_tractor}</strong>
+            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${isUrg ? 'bg-red-100 text-red-800' : 'bg-stone-100 text-stone-700'}">${t.prioridad}</span>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-barnTerra">${t.estatus}</span>
         </div>
-        <h4 class="font-bold text-stone-900 text-sm">${tr ? tr.modelo : t.id_tractor}</h4>
-        <p class="text-xs text-stone-600 line-clamp-2">${t.descripcion_falla}</p>
-        <div class="flex justify-between text-[10px] text-stone-400 pt-1 border-t border-stone-100">
-          <span>Rancho reporte: ${RANCH_NAMES[t.id_rancho_reporte] || 'N/A'}</span>
-          <span class="font-bold text-emeraldAgro">Atender / Cerrar →</span>
+        <p class="text-stone-800 font-semibold">${t.descripcion_falla}</p>
+        <div class="flex items-center justify-between text-[11px] text-stone-500 pt-1 border-t border-stone-100">
+          <span>Rancho: ${RANCH_NAMES[t.id_rancho_reporte] || t.id_rancho_reporte}</span>
+          <button type="button" onclick="openTicketForRepair(${t.id_servicio})"
+            class="px-3 py-1.5 rounded-xl bg-emeraldAgro hover:bg-forest text-white font-extrabold text-xs transition">
+            Atender / Cerrar →
+          </button>
         </div>
-      </button>
+      </div>
     `;
   }).join('');
 }
 
 export function openTicketForRepair(idServicio) {
-  const ticket = state.dbTickets.find(t => t.id_servicio === idServicio);
+  const ticket = (state.dbTickets || []).find(t => t.id_servicio === idServicio);
   if (!ticket) return;
-  state.activeTicketIdForRole3 = idServicio;
-  renderRole3TicketList();
 
-  const tr = state.dbTractors.find(x => x.id_tractor === ticket.id_tractor);
-  const panel = document.getElementById('role3-close-panel');
-  panel.classList.remove('hidden');
+  state.activeRepairTicketId = idServicio;
+  resetPreventiveTagsUI();
 
   document.getElementById('close-ticket-badge').textContent = `TICKET #${ticket.id_servicio} · ${ticket.prioridad}`;
-  document.getElementById('close-ticket-tractor').textContent = `#${ticket.id_tractor} · ${tr ? tr.modelo : ''}`;
+  document.getElementById('close-ticket-tractor').textContent = `#${ticket.id_tractor}`;
   document.getElementById('close-ticket-fault').textContent = ticket.descripcion_falla;
   document.getElementById('input-repair-work').value = ticket.trabajo_realizado || '';
 
-  const initPhotos = state.dbEvidences.filter(e => e.id_servicio === idServicio && e.etapa === 'PETICION_INICIAL');
+  const initPhotos = (state.dbEvidences || []).filter(e => e.id_servicio === idServicio && e.tipo_evidencia === 'FALLA_INICIAL');
   const initBox = document.getElementById('close-ticket-initial-photos');
   const initRow = document.getElementById('close-initial-photos-row');
   if (initPhotos.length > 0) {
     initBox.classList.remove('hidden');
-    initRow.innerHTML = initPhotos.map(p => `<img src="${p.url_imagen}" class="w-16 h-16 rounded-xl object-cover border border-stone-300 shrink-0" />`).join('');
+    initRow.innerHTML = initPhotos.map(p => `<img src="${p.imagen_base64}" class="w-16 h-16 rounded-xl object-cover border border-stone-300 shrink-0" />`).join('');
   } else {
     initBox.classList.add('hidden');
   }
 
-  state.role3DraftFiles = [];
-  renderDraftPhotos('role3');
+  localRole3Photos = [];
+  renderDraftPhotoGrid('role3');
   setResolutionStatus('FINALIZADO');
+
+  const panel = document.getElementById('role3-close-panel');
+  panel.classList.remove('hidden');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 export function closeRole3Panel() {
-  state.activeTicketIdForRole3 = null;
+  state.activeRepairTicketId = null;
+  resetPreventiveTagsUI();
   document.getElementById('role3-close-panel').classList.add('hidden');
-  renderRole3TicketList();
 }
 
 export function setResolutionStatus(status) {
-  state.selectedResolution = status;
-  const btnF = document.getElementById('status-btn-finalizado');
-  const btnE = document.getElementById('status-btn-espera');
+  localResolutionStatus = status;
+  state.currentResolutionStatus = status;
+  const btnFin = document.getElementById('status-btn-finalizado');
+  const btnEsp = document.getElementById('status-btn-espera');
   const waitBox = document.getElementById('wait-reason-box');
+
   if (status === 'FINALIZADO') {
-    btnF.className = 'py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center';
-    btnE.className = 'py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center';
+    btnFin.className = 'py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center';
+    btnEsp.className = 'py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center';
     waitBox.classList.add('hidden');
   } else {
-    btnF.className = 'py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center';
-    btnE.className = 'py-3 px-2.5 rounded-xl border-2 border-harvestGold bg-amber-50 text-barnTerra font-extrabold text-xs transition text-center';
+    btnEsp.className = 'py-3 px-2.5 rounded-xl border-2 border-harvestGold bg-amber-50 text-barnTerra font-extrabold text-xs transition text-center';
+    btnFin.className = 'py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center';
     waitBox.classList.remove('hidden');
   }
 }
 
 export async function submitRepairClosure(syncFn) {
-  const ticket = state.dbTickets.find(t => t.id_servicio === state.activeTicketIdForRole3);
+  if (!state.activeRepairTicketId) return;
+  const ticket = (state.dbTickets || []).find(t => t.id_servicio === state.activeRepairTicketId);
   if (!ticket) return;
 
   const workText = document.getElementById('input-repair-work').value.trim();
   if (!workText) {
-    showToast('Describe el trabajo realizado.', 'error');
+    showToast('Describe el trabajo realizado o el diagnóstico.', 'error');
+    document.getElementById('input-repair-work').focus();
     return;
   }
 
-  const btn = document.getElementById('btn-save-repair');
-  btn.disabled = true;
-  btn.textContent = 'GUARDANDO REPARACIÓN...';
+  let finalWorkText = workText;
+  if (selectedPreventiveTags.size > 0) {
+    const tags = Array.from(selectedPreventiveTags).map(c => `[PM-${c}H]`).join(' ');
+    const lastLog = (state.dbFuelLogs || []).find(l => l.id_tractor === ticket.id_tractor && l.horometro !== null);
+    const horoTag = lastLog ? `[HORO:${lastLog.horometro}]` : '';
+    finalWorkText = `${tags} ${horoTag} ${workText}`.trim();
+  }
 
-  const updatePayload = {
-    trabajo_realizado: workText,
-    estatus: state.selectedResolution,
-    id_usuario_repara: state.currentUser.id_usuario,
-    motivo_espera: state.selectedResolution === 'EN_ESPERA' ? document.getElementById('select-wait-reason').value : null,
-    fecha_cierre: state.selectedResolution === 'FINALIZADO' ? new Date().toISOString() : null
+  const patchData = {
+    trabajo_realizado: finalWorkText,
+    estatus: localResolutionStatus || 'FINALIZADO',
+    motivo_espera: localResolutionStatus === 'EN_ESPERA' ? document.getElementById('select-wait-reason').value : null,
+    id_usuario_taller: state.currentUser.id_usuario,
+    fecha_cierre: localResolutionStatus === 'FINALIZADO' ? new Date().toISOString() : null
   };
 
+  const btn = document.getElementById('btn-save-repair');
+  btn.disabled = true;
+  btn.textContent = 'GUARDANDO SERVICIO...';
+
   try {
-    await sbFetch(`servicios_mantenimiento?id_servicio=eq.${ticket.id_servicio}`, {
+    await sbFetch(`servicios_mantenimiento?id_servicio=eq.${state.activeRepairTicketId}`, {
       method: 'PATCH',
-      body: JSON.stringify(updatePayload)
+      body: JSON.stringify(patchData)
     });
 
-    for (const item of state.role3DraftFiles) {
-      const publicUrl = await uploadImageToSupabaseStorage(item.fileObj, `srv_${ticket.id_servicio}_final`);
-      await sbFetch('evidencias_servicio', {
-        method: 'POST',
-        body: JSON.stringify({
-          id_servicio: ticket.id_servicio,
-          etapa: 'REPARACION_FINAL',
-          url_imagen: publicUrl,
-          subido_por: state.currentUser.id_usuario
-        })
-      });
+    if (localRole3Photos.length > 0) {
+      const photoPayloads = localRole3Photos.map(img => ({
+        id_servicio: state.activeRepairTicketId,
+        tipo_evidencia: 'REPARACION_TERMINADA',
+        imagen_base64: img
+      }));
+      await sbFetch('evidencias_servicio', { method: 'POST', body: JSON.stringify(photoPayloads) });
     }
 
-    if (state.selectedResolution === 'FINALIZADO') {
-      await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(ticket.id_tractor)}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ estatus_operativo: 'ACTIVO' })
-      });
-    }
-
-    if (syncFn) await syncFn(false);
     closeRole3Panel();
-    showToast(`✔ Ticket #${ticket.id_servicio} actualizado a ${state.selectedResolution}.`, 'success');
+    if (syncFn) await syncFn(false);
+    showToast('✔ Servicio actualizado correctamente en Taller.', 'success');
   } catch (err) {
     handleAppError('Cierre de taller', err);
   } finally {

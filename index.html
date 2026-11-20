@@ -52,8 +52,8 @@
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-9 h-9 rounded-xl bg-emeraldAgro border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
                         <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10M12 7v10" />
-            </svg>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10M12 7v10" />
+                        </svg>
                     </div>
                     <div class="truncate">
                         <div class="flex items-center gap-1.5">
@@ -67,10 +67,10 @@
                 </div>
 
                 <button id="network-pill" onclick="toggleNetworkMode()" title="Toca para probar modo Sin Señal o sincronizar" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition active:scale-95 bg-emeraldAgro/90 border border-emerald-300/40 text-white shadow-sm shrink-0">
-          <span id="network-dot" class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-          <span id="network-text">EN LÍNEA</span>
-          <span id="offline-badge" class="hidden ml-0.5 bg-amber-400 text-forest px-1.5 py-0.2 rounded-full text-[10px] font-extrabold">0</span>
-        </button>
+                    <span id="network-dot" class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                    <span id="network-text">EN LÍNEA</span>
+                    <span id="offline-badge" class="hidden ml-0.5 bg-amber-400 text-forest px-1.5 py-0.2 rounded-full text-[10px] font-extrabold">0</span>
+                </button>
             </div>
 
             <div id="active-role-bar" class="hidden mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-xs">
@@ -121,8 +121,8 @@
                                 required />
                         </div>
                         <button id="btn-login-submit" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
-              INGRESAR AL SISTEMA →
-            </button>
+                            INGRESAR AL SISTEMA →
+                        </button>
                     </form>
                 </div>
             </section>
@@ -132,11 +132,11 @@
                 <div class="bg-[#1C231F] text-white rounded-2xl p-4 shadow-md border border-stone-700">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span> Escanear Código QR del Tractor
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span> Escanear Código QR del Tractor
                         </span>
                         <button id="btn-toggle-camera" type="button" onclick="toggleRealCamera()" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emeraldAgro hover:bg-emerald-700 text-white transition">
-              📷 Abrir Cámara
-            </button>
+                            📷 Abrir Cámara
+                        </button>
                     </div>
                     <div id="real-camera-box" class="hidden mb-3 rounded-xl overflow-hidden bg-black border border-amber-400/60">
                         <div id="qr-reader" class="w-full"></div>
@@ -181,14 +181,23 @@
                             <span id="urgent-ticket-text" class="text-[11px] font-semibold"></span>
                         </div>
                     </div>
+
+                    <!-- SEMÁFORO PREVENTIVO (300h / 500h / 1000h) -->
+                    <div id="preventive-pm-box" class="hidden pt-2 border-t border-stone-100 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-stone-500">Semáforo Preventivo (Horómetro)</span>
+                            <span id="pm-current-horo" class="text-[10px] font-extrabold text-forest">0 hrs</span>
+                        </div>
+                        <div id="pm-badges-grid" class="grid grid-cols-3 gap-1.5"></div>
+                    </div>
                 </div>
 
                 <div id="no-tractors-warning" class="hidden bg-amber-50 border-2 border-harvestGold rounded-2xl p-4 text-center space-y-2">
                     <p class="text-sm font-extrabold text-forest">Aún no hay tractores dados de alta</p>
                     <p class="text-xs text-stone-600">Registra el primer tractor y genera su etiqueta QR para comenzar.</p>
                     <button id="btn-go-register-qr" type="button" onclick="switchScreen('tractors-qr')" class="hidden px-4 py-2 rounded-xl bg-harvestGold text-white text-xs font-extrabold shadow-sm">
-            + Dar de Alta Tractor y Generar QR
-          </button>
+                        + Dar de Alta Tractor y Generar QR
+                    </button>
                 </div>
             </section>
 
@@ -199,11 +208,11 @@
                         <span class="text-xs font-extrabold uppercase tracking-wider text-harvestGold">Despacho de Combustible</span>
                         <div id="admin-ranch-selector-box" class="hidden">
                             <select id="select-admin-charge-ranch" onchange="updateCrossRanchBanner()" class="bg-amber-50 border border-harvestGold rounded-lg px-2 py-1 text-xs font-bold text-forest">
-                <option value="EDEN">Bomba: El Edén</option>
-                <option value="MATANUZKA">Bomba: Matanuzka</option>
-                <option value="ESPERANZA">Bomba: La Esperanza</option>
-                <option value="ARADOS">Bomba: Arados</option>
-              </select>
+                                <option value="EDEN">Bomba: El Edén</option>
+                                <option value="MATANUZKA">Bomba: Matanuzka</option>
+                                <option value="ESPERANZA">Bomba: La Esperanza</option>
+                                <option value="ARADOS">Bomba: Arados</option>
+                            </select>
                         </div>
                     </div>
 
@@ -255,8 +264,8 @@
                     </div>
 
                     <button id="btn-save-diesel" type="button" onclick="openFuelConfirmModal()" class="w-full py-4 rounded-2xl bg-harvestGold hover:bg-amber-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
-            REVISAR Y REGISTRAR CARGA →
-          </button>
+                        REVISAR Y REGISTRAR CARGA →
+                    </button>
                 </div>
             </section>
 
@@ -277,11 +286,11 @@
                         <div>
                             <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Base (Dueño de la unidad) *</label>
                             <select id="new-trc-rancho" required class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3 text-xs font-bold text-stone-900">
-                <option value="EDEN">El Edén</option>
-                <option value="MATANUZKA">Matanuzka</option>
-                <option value="ESPERANZA">La Esperanza</option>
-                <option value="ARADOS">Arados</option>
-              </select>
+                                <option value="EDEN">El Edén</option>
+                                <option value="MATANUZKA">Matanuzka</option>
+                                <option value="ESPERANZA">La Esperanza</option>
+                                <option value="ARADOS">Arados</option>
+                            </select>
                         </div>
                         <div class="grid grid-cols-2 gap-2.5">
                             <div>
@@ -294,15 +303,15 @@
                             </div>
                         </div>
                         <button id="btn-create-tractor" type="submit" class="w-full py-3.5 rounded-2xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-sm shadow-md transition">
-              GUARDAR TRACTOR Y GENERAR QR
-            </button>
+                            GUARDAR TRACTOR Y GENERAR QR
+                        </button>
                     </form>
                 </div>
 
                 <div id="generated-qr-wrapper" class="hidden bg-white rounded-2xl p-4 border-2 border-harvestGold shadow-md space-y-3 text-center">
                     <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-barnTerra px-2.5 py-0.5 rounded-full">
-            Etiqueta QR Lista para Pegar en Tractor
-          </span>
+                        Etiqueta QR Lista para Pegar en Tractor
+                    </span>
                     <div id="printable-qr-card" class="mx-auto max-w-[260px] bg-white border-4 border-forest rounded-2xl p-4 flex flex-col items-center space-y-2">
                         <span class="text-[10px] font-extrabold uppercase tracking-widest text-emeraldAgro">AGROFLEET QR</span>
                         <div id="qrcode-canvas-box" class="p-2 bg-white rounded-xl"></div>
@@ -317,8 +326,8 @@
                         <button type="button" onclick="printQRInPWA()" class="py-2.5 px-3 rounded-xl bg-forest hover:bg-emeraldAgro text-white font-extrabold text-xs shadow-sm">🖨️ Imprimir Etiqueta</button>
                     </div>
                     <button id="btn-share-qr" type="button" onclick="shareQRLabelPWA()" class="w-full py-2 px-3 rounded-xl bg-sandCard hover:bg-stone-200 text-forest font-bold text-xs border border-stone-300">
-            📤 Compartir Etiqueta (WhatsApp / Impresora Bluetooth)
-          </button>
+                        📤 Compartir Etiqueta (WhatsApp / Impresora Bluetooth)
+                    </button>
                 </div>
 
                 <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-2.5">
@@ -344,11 +353,11 @@
                     <div>
                         <label for="select-fault-rancho" class="block text-xs font-bold text-stone-700 mb-1">Rancho donde se encuentra la unidad</label>
                         <select id="select-fault-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-800">
-              <option value="EDEN">El Edén</option>
-              <option value="MATANUZKA">Matanuzka</option>
-              <option value="ESPERANZA">La Esperanza</option>
-              <option value="ARADOS">Arados</option>
-            </select>
+                            <option value="EDEN">El Edén</option>
+                            <option value="MATANUZKA">Matanuzka</option>
+                            <option value="ESPERANZA">La Esperanza</option>
+                            <option value="ARADOS">Arados</option>
+                        </select>
                     </div>
 
                     <div>
@@ -368,16 +377,16 @@
                         <label class="block text-xs font-bold text-stone-700 mb-1.5">Evidencia Fotográfica Inicial</label>
                         <div id="role2-photo-grid" class="grid grid-cols-3 gap-2">
                             <label class="aspect-square rounded-xl border-2 border-dashed border-barnTerra/60 bg-orange-50/50 hover:bg-orange-50 flex flex-col items-center justify-center cursor-pointer text-barnTerra p-2 text-center">
-                <span class="text-lg">📷</span>
-                <span class="text-[10px] font-bold mt-1 leading-tight">Tomar / Subir Foto</span>
-                <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'role2')" />
-              </label>
+                                <span class="text-lg">📷</span>
+                                <span class="text-[10px] font-bold mt-1 leading-tight">Tomar / Subir Foto</span>
+                                <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'role2')" />
+                            </label>
                         </div>
                     </div>
 
                     <button id="btn-submit-fault" type="button" onclick="submitMaintenanceRequest()" class="w-full py-4 rounded-2xl bg-barnTerra hover:bg-red-900 active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
-            ENVIAR PETICIÓN AL TALLER
-          </button>
+                        ENVIAR PETICIÓN AL TALLER
+                    </button>
                 </div>
 
                 <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-2">
@@ -415,6 +424,22 @@
                         <div id="close-initial-photos-row" class="flex gap-2 overflow-x-auto no-scrollbar"></div>
                     </div>
 
+                    <!-- BOTONES RÁPIDOS DE SERVICIO PREVENTIVO -->
+                    <div>
+                        <span class="block text-xs font-bold text-stone-700 mb-1.5">¿Incluyó Servicio Preventivo? (Reinicia contador)</span>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" id="pm-btn-300" onclick="togglePreventiveTag('300')" class="py-2 px-1.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-[10px] leading-tight text-center transition">
+                                🛢️ 300h<br><span class="font-normal">Motor</span>
+                            </button>
+                            <button type="button" id="pm-btn-500" onclick="togglePreventiveTag('500')" class="py-2 px-1.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-[10px] leading-tight text-center transition">
+                                ⛽ 500h<br><span class="font-normal">Diésel/Aire</span>
+                            </button>
+                            <button type="button" id="pm-btn-1000" onclick="togglePreventiveTag('1000')" class="py-2 px-1.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-[10px] leading-tight text-center transition">
+                                ⚙️ 1000h<br><span class="font-normal">Hidr./Sec.</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div>
                         <label for="input-repair-work" class="block text-xs font-bold text-stone-700 mb-1">Trabajo de Reparación Realizado *</label>
                         <textarea id="input-repair-work" rows="3" placeholder="Describe la reparación realizada o piezas cambiadas..." class="w-full bg-creamSand border border-stone-300 focus:border-emeraldAgro focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
@@ -424,10 +449,10 @@
                         <label class="block text-xs font-bold text-stone-700 mb-1.5">Evidencia de Reparación Terminada</label>
                         <div id="role3-photo-grid" class="grid grid-cols-3 gap-2">
                             <label class="aspect-square rounded-xl border-2 border-dashed border-emeraldAgro/60 bg-emerald-50/50 hover:bg-emerald-50 flex flex-col items-center justify-center cursor-pointer text-emeraldAgro p-2 text-center">
-                <span class="text-lg">📷</span>
-                <span class="text-[10px] font-bold mt-1 leading-tight">Foto Reparación</span>
-                <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'role3')" />
-              </label>
+                                <span class="text-lg">📷</span>
+                                <span class="text-[10px] font-bold mt-1 leading-tight">Foto Reparación</span>
+                                <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'role3')" />
+                            </label>
                         </div>
                     </div>
 
@@ -435,26 +460,26 @@
                         <label class="block text-xs font-bold text-stone-700 mb-1.5">Estatus del Servicio</label>
                         <div class="grid grid-cols-2 gap-2.5">
                             <button type="button" id="status-btn-finalizado" onclick="setResolutionStatus('FINALIZADO')" class="py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center">
-                ✔ FINALIZADO<br><span class="text-[10px] font-normal">Tractor operativo</span>
-              </button>
+                                ✔ FINALIZADO<br><span class="text-[10px] font-normal">Tractor operativo</span>
+                            </button>
                             <button type="button" id="status-btn-espera" onclick="setResolutionStatus('EN_ESPERA')" class="py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center">
-                ⏳ EN ESPERA<br><span class="text-[10px] font-normal">Refacción / Taller ext.</span>
-              </button>
+                                ⏳ EN ESPERA<br><span class="text-[10px] font-normal">Refacción / Taller ext.</span>
+                            </button>
                         </div>
                     </div>
 
                     <div id="wait-reason-box" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3">
                         <label for="select-wait-reason" class="block text-xs font-bold text-amber-900 mb-1">Motivo de espera:</label>
                         <select id="select-wait-reason" class="w-full bg-white border border-amber-300 rounded-lg py-2 px-2.5 text-xs font-semibold text-stone-800">
-              <option value="Compra de refacción">Compra de refacción</option>
-              <option value="Envío a taller externo">Envío a taller externo</option>
-              <option value="Esperando autorización">Esperando autorización</option>
-            </select>
+                            <option value="Compra de refacción">Compra de refacción</option>
+                            <option value="Envío a taller externo">Envío a taller externo</option>
+                            <option value="Esperando autorización">Esperando autorización</option>
+                        </select>
                     </div>
 
                     <button id="btn-save-repair" type="button" onclick="submitRepairClosure()" class="w-full py-4 rounded-2xl bg-emeraldAgro hover:bg-forest active:scale-[0.99] text-white font-extrabold text-sm shadow-md transition">
-            CONFIRMAR Y GUARDAR SERVICIO
-          </button>
+                        CONFIRMAR Y GUARDAR SERVICIO
+                    </button>
                 </div>
             </section>
 
@@ -472,16 +497,16 @@
                     <div id="admin-history-filters" class="hidden space-y-2 pt-2 border-t border-stone-100">
                         <div class="grid grid-cols-2 gap-2">
                             <select id="filter-history-tab" onchange="renderHistoryScreen()" class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800">
-                <option value="DIESEL">Ver Cargas de Diésel</option>
-                <option value="MNT">Ver Mantenimientos</option>
-              </select>
+                                <option value="DIESEL">Ver Cargas de Diésel</option>
+                                <option value="MNT">Ver Mantenimientos</option>
+                            </select>
                             <select id="filter-history-ranch" onchange="renderHistoryScreen()" class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800">
-                <option value="TODOS">Todos los Ranchos</option>
-                <option value="EDEN">El Edén</option>
-                <option value="MATANUZKA">Matanuzka</option>
-                <option value="ESPERANZA">La Esperanza</option>
-                <option value="ARADOS">Arados</option>
-              </select>
+                                <option value="TODOS">Todos los Ranchos</option>
+                                <option value="EDEN">El Edén</option>
+                                <option value="MATANUZKA">Matanuzka</option>
+                                <option value="ESPERANZA">La Esperanza</option>
+                                <option value="ARADOS">Arados</option>
+                            </select>
                         </div>
                     </div>
 
@@ -555,11 +580,11 @@
                     <div>
                         <label class="block text-xs font-bold text-stone-700 mb-1">Rancho de Carga</label>
                         <select id="edit-fuel-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-900">
-              <option value="EDEN">El Edén</option>
-              <option value="MATANUZKA">Matanuzka</option>
-              <option value="ESPERANZA">La Esperanza</option>
-              <option value="ARADOS">Arados</option>
-            </select>
+                            <option value="EDEN">El Edén</option>
+                            <option value="MATANUZKA">Matanuzka</option>
+                            <option value="ESPERANZA">La Esperanza</option>
+                            <option value="ARADOS">Arados</option>
+                        </select>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -586,18 +611,18 @@
                         <div>
                             <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Reporte</label>
                             <select id="edit-mnt-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
-                <option value="EDEN">El Edén</option>
-                <option value="MATANUZKA">Matanuzka</option>
-                <option value="ESPERANZA">La Esperanza</option>
-                <option value="ARADOS">Arados</option>
-              </select>
+                                <option value="EDEN">El Edén</option>
+                                <option value="MATANUZKA">Matanuzka</option>
+                                <option value="ESPERANZA">La Esperanza</option>
+                                <option value="ARADOS">Arados</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-stone-700 mb-1">Prioridad</label>
                             <select id="edit-mnt-prio" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
-                <option value="NORMAL">NORMAL</option>
-                <option value="URGENTE">URGENTE</option>
-              </select>
+                                <option value="NORMAL">NORMAL</option>
+                                <option value="URGENTE">URGENTE</option>
+                            </select>
                         </div>
                     </div>
                     <div>
@@ -638,19 +663,19 @@
                         <div>
                             <label class="block text-xs font-bold text-stone-700 mb-1">Rancho Base *</label>
                             <select id="edit-trc-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
-                <option value="EDEN">El Edén</option>
-                <option value="MATANUZKA">Matanuzka</option>
-                <option value="ESPERANZA">La Esperanza</option>
-                <option value="ARADOS">Arados</option>
-              </select>
+                                <option value="EDEN">El Edén</option>
+                                <option value="MATANUZKA">Matanuzka</option>
+                                <option value="ESPERANZA">La Esperanza</option>
+                                <option value="ARADOS">Arados</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-stone-700 mb-1">Estatus</label>
                             <select id="edit-trc-status" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-2.5 text-xs font-bold text-stone-900">
-                <option value="ACTIVO">ACTIVO</option>
-                <option value="EN_TALLER">EN_TALLER</option>
-                <option value="BAJA">BAJA</option>
-              </select>
+                                <option value="ACTIVO">ACTIVO</option>
+                                <option value="EN_TALLER">EN_TALLER</option>
+                                <option value="BAJA">BAJA</option>
+                            </select>
                         </div>
                     </div>
 
