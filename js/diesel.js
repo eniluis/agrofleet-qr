@@ -16,17 +16,15 @@ export function applySmartTractorContext(tractorId) {
     if (!tractorId) return;
     const { lastHorometer, lastActivity } = getTractorLastTelemetry(tractorId);
 
-    // 1. Mostrar pista del último horómetro
     const horoHint = document.getElementById('ui-last-horometer-hint');
     const horoInput = document.getElementById('input-horometer');
     if (horoHint) {
         horoHint.textContent = lastHorometer !== null ? `Último: ${lastHorometer} hrs` : 'Sin horómetro previo';
     }
     if (horoInput) {
-        horoInput.placeholder = lastHorometer !== null ? `Mayor a ${lastHorometer}` : 'Ej. 4225.5';
+        horoInput.placeholder = lastHorometer !== null ? `Mayor o igual a ${lastHorometer}` : 'Ej. 4225.5';
     }
 
-    // 2. Preseleccionar última actividad del tractor si el usuario aún no eligió otra
     const selAct = document.getElementById('select-activity');
     if (selAct && lastActivity) {
         setAreaFilter('TODAS');
@@ -43,7 +41,6 @@ export function applySmartTractorContext(tractorId) {
         toggleCustomActivity();
     }
 
-    // 3. Revisar si tiene ticket URGENTE abierto en taller
     const urgentBox = document.getElementById('urgent-ticket-alert');
     const urgentText = document.getElementById('urgent-ticket-text');
     if (urgentBox && urgentText) {
@@ -161,10 +158,25 @@ export function openFuelConfirmModal() {
         return;
     }
 
-    const liters = parseFloat(document.getElementById('input-liters').value);
+    const tr = state.dbTractors.find(t => t.id_tractor === state.selectedTractorId);
+    const { lastHorometer } = getTractorLastTelemetry(state.selectedTractorId);
+
+    const litersInput = document.getElementById('input-liters');
+    const liters = parseFloat(litersInput.value);
     if (isNaN(liters) || liters <= 0) {
         showToast('Ingresa los litros suministrados.', 'error');
-        document.getElementById('input-liters').focus();
+        litersInput.focus();
+        return;
+    }
+
+    // BLOQUEO ESTRICTO 1: Capacidad máxima del tanque
+    if (tr && tr.capacidad_tanque && liters > parseFloat(tr.capacidad_tanque)) {
+        showToast(
+            `⛔ Carga bloqueada: #${tr.id_tractor} tiene tanque de ${tr.capacidad_tanque} L. No puedes registrar ${liters} L.`,
+            'error'
+        );
+        litersInput.focus();
+        litersInput.select();
         return;
     }
 
@@ -178,7 +190,20 @@ export function openFuelConfirmModal() {
         return;
     }
 
-    const horoVal = parseFloat(document.getElementById('input-horometer').value);
+    const horoInput = document.getElementById('input-horometer');
+    const horoVal = parseFloat(horoInput.value);
+
+    // BLOQUEO ESTRICTO 2: Continuidad de horómetro
+    if (!isNaN(horoVal) && lastHorometer !== null && horoVal < lastHorometer) {
+        showToast(
+            `⛔ Horómetro inválido: Capturaste ${horoVal} hrs, pero el último registro fue ${lastHorometer} hrs.`,
+            'error'
+        );
+        horoInput.focus();
+        horoInput.select();
+        return;
+    }
+
     const ranchoCarga = state.currentUser.rol === 'ADMIN' ?
         document.getElementById('select-admin-charge-ranch').value :
         state.currentUser.id_rancho;
@@ -192,30 +217,15 @@ export function openFuelConfirmModal() {
         id_usuario_diesel: state.currentUser.id_usuario
     };
 
-    const tr = state.dbTractors.find(t => t.id_tractor === state.selectedTractorId);
-    const { lastHorometer } = getTractorLastTelemetry(state.selectedTractorId);
-
     document.getElementById('conf-fuel-tractor').textContent = `#${state.selectedTractorId} · ${tr ? tr.modelo : ''}`;
     document.getElementById('conf-fuel-rancho').textContent = RANCH_NAMES[ranchoCarga] || ranchoCarga;
     document.getElementById('conf-fuel-liters').textContent = `${liters.toFixed(1)} L`;
     document.getElementById('conf-fuel-activity').textContent = actividadFinal;
     document.getElementById('conf-fuel-horo').textContent = isNaN(horoVal) ? 'No registrado' : `${horoVal} hrs`;
 
-    // Construir advertencias inteligentes (Préstamo cruzado, exceso de tanque, horómetro menor)
-    const warnings = [];
-    if (tr && tr.id_rancho_base !== ranchoCarga) {
-        warnings.push(`🚜 Préstamo cruzado: Unidad de ${RANCH_NAMES[tr.id_rancho_base]} cargando en ${RANCH_NAMES[ranchoCarga]}.`);
-    }
-    if (tr && tr.capacidad_tanque && liters > parseFloat(tr.capacidad_tanque)) {
-        warnings.push(`⛽ Exceso de capacidad: Intentas cargar ${liters} L pero el tanque registrado es de ${tr.capacidad_tanque} L.`);
-    }
-    if (!isNaN(horoVal) && lastHorometer !== null && horoVal < lastHorometer) {
-        warnings.push(`⏱️ Horómetro menor al anterior: Capturaste ${horoVal} hrs y el último registro fue ${lastHorometer} hrs.`);
-    }
-
     const crossWarn = document.getElementById('conf-fuel-cross-warn');
-    if (warnings.length > 0) {
-        crossWarn.innerHTML = warnings.join('<br><br>');
+    if (tr && tr.id_rancho_base !== ranchoCarga) {
+        crossWarn.textContent = `🚜 Préstamo cruzado: Unidad de ${RANCH_NAMES[tr.id_rancho_base]} cargando en ${RANCH_NAMES[ranchoCarga]}.`;
         crossWarn.classList.remove('hidden');
     } else {
         crossWarn.classList.add('hidden');
