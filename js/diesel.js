@@ -1,6 +1,7 @@
 import { RANCH_NAMES, CATALOGO_ACTIVIDADES, state } from './config.js';
 import { sbFetch, enqueueOfflineAction, showToast, handleAppError } from './api.js';
 import { evaluatePreventiveStatus, renderPreventiveSemaphores } from './qr-fleet.js';
+import { sendTicketWhatsAppAlert } from './maintenance.js';
 
 let isSavingFuel = false;
 
@@ -173,7 +174,6 @@ export function openFuelConfirmModal() {
         return;
     }
 
-    // BLOQUEO ESTRICTO 1: Capacidad máxima del tanque
     if (tr && tr.capacidad_tanque && liters > parseFloat(tr.capacidad_tanque)) {
         showToast(
             `⛔ Carga bloqueada: #${tr.id_tractor} tiene tanque de ${tr.capacidad_tanque} L. No puedes registrar ${liters} L.`,
@@ -197,7 +197,6 @@ export function openFuelConfirmModal() {
     const horoInput = document.getElementById('input-horometer');
     const horoVal = parseFloat(horoInput.value);
 
-    // BLOQUEO ESTRICTO 2: Continuidad de horómetro
     if (!isNaN(horoVal) && lastHorometer !== null && horoVal < lastHorometer) {
         showToast(
             `⛔ Horómetro inválido: Capturaste ${horoVal} hrs, pero el último registro fue ${lastHorometer} hrs.`,
@@ -262,6 +261,7 @@ export async function confirmAndSaveFuelLoad(syncFn) {
 
             const pmEval = evaluatePreventiveStatus(payload.id_tractor);
             let autoTicketsCreated = 0;
+            const newlyTriggeredItems = [];
 
             if (pmEval) {
                 const overdueItems = pmEval.items.filter(item => item.isOverdue);
@@ -288,6 +288,7 @@ export async function confirmAndSaveFuelLoad(syncFn) {
                             })
                         });
                         autoTicketsCreated++;
+                        newlyTriggeredItems.push(item.label);
                     }
                 }
 
@@ -295,6 +296,14 @@ export async function confirmAndSaveFuelLoad(syncFn) {
                     await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(payload.id_tractor)}`, {
                         method: 'PATCH',
                         body: JSON.stringify({ estatus_operativo: 'EN_TALLER' })
+                    });
+
+                    sendTicketWhatsAppAlert({
+                        idTractor: payload.id_tractor,
+                        idRancho: payload.id_rancho_carga,
+                        prioridad: 'URGENTE',
+                        descripcion: `Mantenimiento preventivo vencido (${newlyTriggeredItems.join(' + ')}) · Horómetro: ${pmEval.currentHoro} hrs`,
+                        tipoOrigen: 'ALERTA PREVENTIVA AUTOMÁTICA'
                     });
                 }
             }

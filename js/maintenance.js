@@ -1,4 +1,4 @@
-import { RANCH_NAMES, state } from './config.js';
+import { RANCH_NAMES, WORKSHOP_WHATSAPP_PHONE, state } from './config.js';
 import { sbFetch, enqueueOfflineAction, showToast, handleAppError, uploadImageToSupabaseStorage } from './api.js';
 
 let selectedPreventiveTags = new Set();
@@ -6,6 +6,28 @@ let localFaultPriority = 'NORMAL';
 let localResolutionStatus = 'FINALIZADO';
 let localRole2Photos = [];
 let localRole3Photos = [];
+
+export function sendTicketWhatsAppAlert({ idTractor, idRancho, prioridad, descripcion, tipoOrigen = 'REPORTE DE CAMPO' }) {
+    const ranchoLabel = RANCH_NAMES[idRancho] || idRancho || 'Sin especificar';
+    const fechaHora = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+
+    const msg = [
+        `🚨 *ALERTA AGROFLEET QR · ORDEN ${prioridad}*`,
+        `• *Origen:* ${tipoOrigen}`,
+        `• *Unidad:* #${idTractor}`,
+        `• *Ubicación:* ${ranchoLabel}`,
+        `• *Detalle:* ${descripcion}`,
+        `• *Hora:* ${fechaHora}`,
+        ``,
+        `_Favor de atender en bandeja de Taller AgroFleet._`
+    ].join('\n');
+
+    const phone = (WORKSHOP_WHATSAPP_PHONE || '').replace(/\D/g, '');
+    const baseUrl = phone && !WORKSHOP_WHATSAPP_PHONE.includes('X') ? `https://wa.me/${phone}` : `https://wa.me/`;
+    const url = `${baseUrl}?text=${encodeURIComponent(msg)}`;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+}
 
 export function setPriority(prio) {
     localFaultPriority = prio;
@@ -122,14 +144,16 @@ export async function submitMaintenanceRequest(syncFn) {
     }
 
     const ranchoReporte = document.getElementById('select-fault-rancho').value;
+    const prioridadActual = localFaultPriority || 'NORMAL';
+    const tractorReporte = state.selectedTractorId;
     const btn = document.getElementById('btn-submit-fault');
     btn.disabled = true;
     btn.textContent = 'ENVIANDO AL TALLER...';
 
     const payload = {
-        id_tractor: state.selectedTractorId,
+        id_tractor: tractorReporte,
         id_rancho_reporte: ranchoReporte,
-        prioridad: localFaultPriority || 'NORMAL',
+        prioridad: prioridadActual,
         descripcion_falla: desc,
         estatus: 'PENDIENTE',
         id_usuario_solicita: state.currentUser.id_usuario
@@ -152,11 +176,21 @@ export async function submitMaintenanceRequest(syncFn) {
                 await sbFetch('evidencias_servicio', { method: 'POST', body: JSON.stringify(photoPayloads) });
             }
             if (syncFn) await syncFn(false);
-            showToast(`✔ Reporte de falla enviado al taller para #${state.selectedTractorId}.`, 'success');
+            showToast(`✔ Reporte de falla enviado al taller para #${tractorReporte}.`, 'success');
         } else {
             enqueueOfflineAction({ table: 'servicios_mantenimiento', payload });
             state.dbTickets.unshift({...payload, id_servicio: 'LOCAL', fecha_solicitud: new Date().toISOString() });
             showToast('⏳ Sin señal: reporte guardado localmente.', 'info');
+        }
+
+        if (prioridadActual === 'URGENTE') {
+            sendTicketWhatsAppAlert({
+                idTractor: tractorReporte,
+                idRancho: ranchoReporte,
+                prioridad: 'URGENTE',
+                descripcion: desc,
+                tipoOrigen: 'REPORTE DE FALLA EN CAMPO'
+            });
         }
 
         document.getElementById('input-fault-desc').value = '';
@@ -219,6 +253,13 @@ export function renderRole3TicketList() {
 
   list.innerHTML = openTickets.map(t => {
     const isUrg = t.prioridad === 'URGENTE';
+    const waPayload = JSON.stringify({
+      idTractor: t.id_tractor,
+      idRancho: t.id_rancho_reporte,
+      prioridad: t.prioridad,
+      descripcion: t.descripcion_falla
+    }).replace(/'/g, '');
+
     return `
       <div class="bg-white rounded-2xl p-3.5 border ${isUrg ? 'border-red-400' : 'border-stone-200'} shadow-sm space-y-2 text-xs">
         <div class="flex items-center justify-between gap-2">
@@ -229,12 +270,18 @@ export function renderRole3TicketList() {
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-barnTerra">${t.estatus}</span>
         </div>
         <p class="text-stone-800 font-semibold">${t.descripcion_falla}</p>
-        <div class="flex items-center justify-between text-[11px] text-stone-500 pt-1 border-t border-stone-100">
-          <span>Rancho: ${RANCH_NAMES[t.id_rancho_reporte] || t.id_rancho_reporte}</span>
-          <button type="button" onclick="openTicketForRepair(${t.id_servicio})"
-            class="px-3 py-1.5 rounded-xl bg-emeraldAgro hover:bg-forest text-white font-extrabold text-xs transition">
-            Atender / Cerrar →
-          </button>
+        <div class="flex items-center justify-between text-[11px] text-stone-500 pt-1 border-t border-stone-100 gap-2">
+          <span class="truncate">Rancho: ${RANCH_NAMES[t.id_rancho_reporte] || t.id_rancho_reporte}</span>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick='notifyTicketWhatsApp(${waPayload})'
+              class="px-2.5 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-forest font-extrabold text-xs transition">
+              📲 WhatsApp
+            </button>
+            <button type="button" onclick="openTicketForRepair(${t.id_servicio})"
+              class="px-3 py-1.5 rounded-xl bg-emeraldAgro hover:bg-forest text-white font-extrabold text-xs transition">
+              Atender / Cerrar →
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -308,23 +355,38 @@ export async function submitRepairClosure(syncFn) {
     return;
   }
 
+  const combinedTags = new Set(selectedPreventiveTags);
+  const desc = ticket.descripcion_falla || '';
+  if (desc.includes('[AUTO-PM-300H]') || desc.includes('[PM-300H]')) combinedTags.add('300');
+  if (desc.includes('[AUTO-PM-500H]') || desc.includes('[PM-500H]')) combinedTags.add('500');
+  if (desc.includes('[AUTO-PM-1000H]') || desc.includes('[PM-1000H]')) combinedTags.add('1000');
+
+  if (combinedTags.has('1000')) {
+    combinedTags.add('500');
+    combinedTags.add('300');
+  } else if (combinedTags.has('500')) {
+    combinedTags.add('300');
+  }
+
   let finalWorkText = workText;
-  if (selectedPreventiveTags.size > 0) {
-    const tags = Array.from(selectedPreventiveTags).map(c => `[PM-${c}H]`).join(' ');
+  if (combinedTags.size > 0) {
+    const orderedTags = ['300', '500', '1000'].filter(c => combinedTags.has(c)).map(c => `[PM-${c}H]`).join(' ');
     const horos = (state.dbFuelLogs || [])
       .filter(l => l.id_tractor === ticket.id_tractor && l.horometro !== null && !isNaN(parseFloat(l.horometro)))
       .map(l => parseFloat(l.horometro));
     const maxHoro = horos.length > 0 ? Math.max(...horos) : null;
     const horoTag = maxHoro !== null ? `[HORO:${maxHoro}]` : '';
-    finalWorkText = `${tags} ${horoTag} ${workText}`.trim();
+    finalWorkText = `${orderedTags} ${horoTag} ${workText}`.trim();
   }
+
+  const isFinalized = (localResolutionStatus || 'FINALIZADO') === 'FINALIZADO';
 
   const patchData = {
     trabajo_realizado: finalWorkText,
     estatus: localResolutionStatus || 'FINALIZADO',
     motivo_espera: localResolutionStatus === 'EN_ESPERA' ? document.getElementById('select-wait-reason').value : null,
     id_usuario_repara: state.currentUser.id_usuario,
-    fecha_cierre: localResolutionStatus === 'FINALIZADO' ? new Date().toISOString() : null
+    fecha_cierre: isFinalized ? new Date().toISOString() : null
   };
 
   const btn = document.getElementById('btn-save-repair');
@@ -346,14 +408,37 @@ export async function submitRepairClosure(syncFn) {
       await sbFetch('evidencias_servicio', { method: 'POST', body: JSON.stringify(photoPayloads) });
     }
 
-    // Regresar tractor a ACTIVO automáticamente si quedó FINALIZADO y no hay más tickets urgentes abiertos
-    if ((localResolutionStatus || 'FINALIZADO') === 'FINALIZADO') {
+    const deletedSiblingIds = new Set();
+
+    if (isFinalized) {
+      if (combinedTags.size > 0) {
+        const siblingTickets = (state.dbTickets || []).filter(t => {
+          if (t.id_tractor !== ticket.id_tractor) return false;
+          if (t.id_servicio === state.activeRepairTicketId) return false;
+          if (t.estatus === 'FINALIZADO') return false;
+          const d = t.descripcion_falla || '';
+          const isCovered300 = combinedTags.has('300') && (d.includes('[AUTO-PM-300H]') || d.includes('[PM-300H]'));
+          const isCovered500 = combinedTags.has('500') && (d.includes('[AUTO-PM-500H]') || d.includes('[PM-500H]'));
+          const isCovered1000 = combinedTags.has('1000') && (d.includes('[AUTO-PM-1000H]') || d.includes('[PM-1000H]'));
+          return isCovered300 || isCovered500 || isCovered1000;
+        });
+
+        for (const sib of siblingTickets) {
+          await sbFetch(`servicios_mantenimiento?id_servicio=eq.${sib.id_servicio}`, {
+            method: 'DELETE'
+          });
+          deletedSiblingIds.add(sib.id_servicio);
+        }
+      }
+
       const otherUrgentOpen = (state.dbTickets || []).some(t =>
         t.id_tractor === ticket.id_tractor &&
         t.id_servicio !== state.activeRepairTicketId &&
+        !deletedSiblingIds.has(t.id_servicio) &&
         t.estatus !== 'FINALIZADO' &&
         t.prioridad === 'URGENTE'
       );
+
       if (!otherUrgentOpen) {
         await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(ticket.id_tractor)}`, {
           method: 'PATCH',
@@ -364,7 +449,11 @@ export async function submitRepairClosure(syncFn) {
 
     closeRole3Panel();
     if (syncFn) await syncFn(false);
-    showToast('✔ Servicio actualizado y tractor reactivado correctamente.', 'success');
+
+    const extraMsg = deletedSiblingIds.size > 0
+      ? ` y se depuraron ${deletedSiblingIds.size} orden(es) redundante(s)`
+      : '';
+    showToast(`✔ Servicio guardado${extraMsg}. Tractor ACTIVO y semáforo en verde.`, 'success');
   } catch (err) {
     handleAppError('Cierre de taller', err);
   } finally {

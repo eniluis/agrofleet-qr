@@ -38,7 +38,8 @@ import {
     closeRole3Panel,
     setResolutionStatus,
     togglePreventiveTag,
-    submitRepairClosure
+    submitRepairClosure,
+    sendTicketWhatsAppAlert
 } from './maintenance.js';
 import {
     renderHistoryScreen,
@@ -170,6 +171,7 @@ Object.assign(window, {
     setResolutionStatus,
     togglePreventiveTag,
     submitRepairClosure: () => submitRepairClosure(syncAllFromSupabase),
+    notifyTicketWhatsApp: (data) => sendTicketWhatsAppAlert({...data, tipoOrigen: 'AVISO DE TALLER' }),
     renderHistoryScreen,
     openAdminEditFuel,
     openAdminEditMnt,
