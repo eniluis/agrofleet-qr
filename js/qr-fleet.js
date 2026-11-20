@@ -1,7 +1,6 @@
 import { RANCH_NAMES, state } from './config.js';
 import { sbFetch, enqueueOfflineAction, showToast, handleAppError } from './api.js';
-import { updateCrossRanchBanner } from './diesel.js';
-
+import { updateCrossRanchBanner, applySmartTractorContext } from './diesel.js';
 let html5QrCodeInstance = null;
 let cameraActive = false;
 let editingTractorId = null;
@@ -67,6 +66,7 @@ export function selectTractor(tractorId, reRenderButtons = true) {
         'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-barnTerra';
 
     updateCrossRanchBanner();
+    applySmartTractorContext(tr.id_tractor);
 }
 
 export async function toggleRealCamera() {

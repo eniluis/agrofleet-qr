@@ -173,6 +173,14 @@
                             <span id="cross-ranch-text" class="text-[11px] font-semibold"></span>
                         </div>
                     </div>
+
+                    <div id="urgent-ticket-alert" class="hidden bg-red-100 border border-red-400 rounded-xl p-2.5 text-xs text-red-950 flex items-start gap-2">
+                        <span class="text-base leading-none">🚨</span>
+                        <div>
+                            <strong class="block font-extrabold text-red-800 uppercase text-[10px]">Unidad con Reporte Urgente en Taller</strong>
+                            <span id="urgent-ticket-text" class="text-[11px] font-semibold"></span>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="no-tractors-warning" class="hidden bg-amber-50 border-2 border-harvestGold rounded-2xl p-4 text-center space-y-2">
@@ -239,7 +247,10 @@
                     </div>
 
                     <div>
-                        <label for="input-horometer" class="block text-xs font-bold text-stone-600 mb-1">Horómetro Actual (Opcional)</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="input-horometer" class="block text-xs font-bold text-stone-600">Horómetro Actual (Opcional)</label>
+                            <span id="ui-last-horometer-hint" class="text-[11px] font-extrabold text-emeraldAgro"></span>
+                        </div>
                         <input id="input-horometer" type="number" step="0.1" inputmode="decimal" placeholder="Ej. 4225.5" class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-2.5 px-3.5 text-sm font-bold text-stone-800" />
                     </div>
 
