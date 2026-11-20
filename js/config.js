@@ -1,6 +1,6 @@
 export const SUPABASE_URL = 'https://swgqjmowhdkzaodkyvpj.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_1PeWHaPebHs1e_vqsqr6Fw_KvQjSl-e';
-export const WORKSHOP_WHATSAPP_PHONE = '5213344143511';
+export const WORKSHOP_WHATSAPP_PHONE = '5214581073339';
 export const RANCH_NAMES = {
     EDEN: 'El Edén',
     MATANUZKA: 'Matanuzka',
