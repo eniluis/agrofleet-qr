@@ -1,8 +1,11 @@
 import { RANCH_NAMES, CATALOGO_ACTIVIDADES, state } from './config.js';
 import { sbFetch, enqueueOfflineAction, showToast, handleAppError } from './api.js';
+import { evaluatePreventiveStatus, renderPreventiveSemaphores } from './qr-fleet.js';
+
+let isSavingFuel = false;
 
 export function getTractorLastTelemetry(tractorId) {
-    const logs = state.dbFuelLogs.filter(l => l.id_tractor === tractorId);
+    const logs = (state.dbFuelLogs || []).filter(l => l.id_tractor === tractorId);
     const lastLogWithHoro = logs.find(l => l.horometro !== null && l.horometro !== undefined && !isNaN(parseFloat(l.horometro)));
     const lastLogWithAct = logs.find(l => l.actividad && l.actividad.trim() !== '');
 
@@ -44,7 +47,7 @@ export function applySmartTractorContext(tractorId) {
     const urgentBox = document.getElementById('urgent-ticket-alert');
     const urgentText = document.getElementById('urgent-ticket-text');
     if (urgentBox && urgentText) {
-        const urgentTicket = state.dbTickets.find(
+        const urgentTicket = (state.dbTickets || []).find(
             t => t.id_tractor === tractorId && t.estatus !== 'FINALIZADO' && t.prioridad === 'URGENTE'
         );
         if (urgentTicket) {
@@ -153,6 +156,7 @@ export function toggleCustomActivity() {
 }
 
 export function openFuelConfirmModal() {
+    if (isSavingFuel) return;
     if (!state.selectedTractorId) {
         showToast('Primero selecciona o escanea un tractor válido.', 'error');
         return;
@@ -235,12 +239,16 @@ export function openFuelConfirmModal() {
 }
 
 export function closeFuelConfirmModal() {
+    if (isSavingFuel) return;
     document.getElementById('modal-confirm-fuel').classList.add('hidden');
 }
 
 export async function confirmAndSaveFuelLoad(syncFn) {
-    if (!state.pendingFuelDraftPayload) return;
-    const payload = state.pendingFuelDraftPayload;
+    if (isSavingFuel || !state.pendingFuelDraftPayload) return;
+    isSavingFuel = true;
+
+    const payload = {...state.pendingFuelDraftPayload };
+    state.pendingFuelDraftPayload = null;
 
     const btn = document.getElementById('btn-confirm-fuel-final');
     btn.disabled = true;
@@ -249,16 +257,66 @@ export async function confirmAndSaveFuelLoad(syncFn) {
     try {
         if (state.isOnline) {
             await sbFetch('cargas_diesel', { method: 'POST', body: JSON.stringify(payload) });
+            document.getElementById('modal-confirm-fuel').classList.add('hidden');
+            state.dbFuelLogs.unshift({...payload, id_carga: 'TEMP', fecha_hora: new Date().toISOString() });
+
+            const pmEval = evaluatePreventiveStatus(payload.id_tractor);
+            let autoTicketsCreated = 0;
+
+            if (pmEval) {
+                const overdueItems = pmEval.items.filter(item => item.isOverdue);
+
+                for (const item of overdueItems) {
+                    const tagMarker = `[AUTO-PM-${item.code}H]`;
+                    const alreadyOpen = (state.dbTickets || []).some(t =>
+                        t.id_tractor === payload.id_tractor &&
+                        t.estatus !== 'FINALIZADO' &&
+                        t.descripcion_falla &&
+                        t.descripcion_falla.includes(tagMarker)
+                    );
+
+                    if (!alreadyOpen) {
+                        await sbFetch('servicios_mantenimiento', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                id_tractor: payload.id_tractor,
+                                id_rancho_reporte: payload.id_rancho_carga,
+                                prioridad: 'URGENTE',
+                                descripcion_falla: `${tagMarker} ${item.desc} · Horómetro actual: ${pmEval.currentHoro} hrs`,
+                                estatus: 'PENDIENTE',
+                                id_usuario_solicita: state.currentUser.id_usuario
+                            })
+                        });
+                        autoTicketsCreated++;
+                    }
+                }
+
+                if (autoTicketsCreated > 0) {
+                    await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(payload.id_tractor)}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ estatus_operativo: 'EN_TALLER' })
+                    });
+                }
+            }
+
             if (syncFn) await syncFn(false);
-            showToast(`✔ Carga de ${payload.litros} L en #${payload.id_tractor} (${RANCH_NAMES[payload.id_rancho_carga]}) guardada.`, 'success');
+            renderPreventiveSemaphores(payload.id_tractor);
+
+            if (autoTicketsCreated > 0) {
+                showToast(`🚨 Carga guardada + ${autoTicketsCreated} orden(es) enviada(s) a Taller (Tractor EN_TALLER).`, 'error');
+            } else if (pmEval && pmEval.items.some(i => i.isOverdue)) {
+                showToast(`⚠️ Carga guardada. El tractor ya tiene órdenes preventivas pendientes en Taller.`, 'info');
+            } else {
+                showToast(`✔ Carga de ${payload.litros} L en #${payload.id_tractor} (${RANCH_NAMES[payload.id_rancho_carga]}) guardada.`, 'success');
+            }
         } else {
             enqueueOfflineAction({ table: 'cargas_diesel', payload });
             state.dbFuelLogs.unshift({...payload, id_carga: 'OFFLINE', fecha_hora: new Date().toISOString() });
+            document.getElementById('modal-confirm-fuel').classList.add('hidden');
+            renderPreventiveSemaphores(payload.id_tractor);
             showToast('⏳ Sin señal: carga guardada en cola local para sincronizar.', 'info');
         }
 
-        closeFuelConfirmModal();
-        state.pendingFuelDraftPayload = null;
         document.getElementById('input-liters').value = '';
         document.getElementById('input-horometer').value = '';
         document.getElementById('input-activity-search').value = '';
@@ -269,6 +327,7 @@ export async function confirmAndSaveFuelLoad(syncFn) {
     } catch (err) {
         handleAppError('Registro de diésel', err);
     } finally {
+        isSavingFuel = false;
         btn.disabled = false;
         btn.textContent = '✔ Sí, Guardar';
     }

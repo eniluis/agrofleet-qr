@@ -43,29 +43,72 @@ export function renderQuickTractors() {
     selectTractor(state.selectedTractorId, false);
 }
 
-function getLastServiceHorometer(tractorId, tagCode) {
-    // Si se realizó un servicio mayor de 1000h, también reinicia los contadores de 500h y 300h
-    const validTags = tagCode === '300' ? ['[PM-300H]', '[PM-1000H]'] :
-        tagCode === '500' ? ['[PM-500H]', '[PM-1000H]'] : ['[PM-1000H]'];
+export function evaluatePreventiveStatus(tractorId) {
+    const horos = (state.dbFuelLogs || [])
+        .filter(l => l.id_tractor === tractorId && l.horometro !== null && !isNaN(parseFloat(l.horometro)))
+        .map(l => parseFloat(l.horometro));
 
-    const ticket = state.dbTickets.find(t =>
-        t.id_tractor === tractorId &&
-        t.estatus === 'FINALIZADO' &&
-        t.trabajo_realizado &&
-        validTags.some(tag => t.trabajo_realizado.includes(tag))
-    );
+    if (horos.length === 0) return null;
 
-    if (!ticket) return null;
+    const currentHoro = Math.max(...horos);
+    const firstRegisteredHoro = Math.min(...horos);
 
-    const match = ticket.trabajo_realizado.match(/\[HORO:([\d.]+)\]/);
-    if (match) return parseFloat(match[1]);
+    const rules = [{
+            code: '300',
+            label: 'Motor 300h',
+            desc: 'Mantenimiento Preventivo 300 hrs (Aceite y filtro de motor)',
+            interval: 300,
+            warn: 30
+        },
+        {
+            code: '500',
+            label: 'Diésel/Aire 500h',
+            desc: 'Mantenimiento Preventivo 500 hrs (Filtro diésel primario y aire)',
+            interval: 500,
+            warn: 40
+        },
+        {
+            code: '1000',
+            label: 'Hidr/Sec 1000h',
+            desc: 'Mantenimiento Preventivo 1000 hrs (Aceite/filtro hidráulico, diésel sec. y aire)',
+            interval: 1000,
+            warn: 50
+        }
+    ];
 
-    const fuelAtTime = state.dbFuelLogs.find(l =>
-        l.id_tractor === tractorId &&
-        l.horometro !== null &&
-        new Date(l.fecha_hora) <= new Date(ticket.fecha_cierre || ticket.fecha_solicitud)
-    );
-    return fuelAtTime ? parseFloat(fuelAtTime.horometro) : null;
+    const items = rules.map(r => {
+        const validTags = r.code === '300' ? ['[PM-300H]', '[PM-1000H]'] :
+            r.code === '500' ? ['[PM-500H]', '[PM-1000H]'] :
+            ['[PM-1000H]'];
+
+        const ticket = (state.dbTickets || []).find(t =>
+            t.id_tractor === tractorId &&
+            t.estatus === 'FINALIZADO' &&
+            t.trabajo_realizado &&
+            validTags.some(tag => t.trabajo_realizado.includes(tag))
+        );
+
+        let baseHoro = firstRegisteredHoro;
+
+        if (ticket) {
+            const match = ticket.trabajo_realizado.match(/\[HORO:([\d.]+)\]/);
+            if (match) {
+                baseHoro = parseFloat(match[1]);
+            }
+        }
+
+        const elapsed = currentHoro - baseHoro;
+        const remaining = Math.round((r.interval - elapsed) * 10) / 10;
+
+        return {
+            ...r,
+            remaining,
+            isOverdue: remaining <= 0,
+            isWarning: remaining > 0 && remaining <= r.warn
+        };
+    });
+
+    return { currentHoro, items };
 }
 
 export function renderPreventiveSemaphores(tractorId) {
@@ -74,46 +117,25 @@ export function renderPreventiveSemaphores(tractorId) {
     const horoLabel = document.getElementById('pm-current-horo');
     if (!box || !grid) return;
 
-    const logs = state.dbFuelLogs.filter(
-        l => l.id_tractor === tractorId && l.horometro !== null && !isNaN(parseFloat(l.horometro))
-    );
-
-    if (logs.length === 0) {
+    const evalData = evaluatePreventiveStatus(tractorId);
+    if (!evalData) {
         box.classList.add('hidden');
         return;
     }
 
-    const currentHoro = parseFloat(logs[0].horometro);
     box.classList.remove('hidden');
-    if (horoLabel) horoLabel.textContent = `Actual: ${currentHoro} hrs`;
+    if (horoLabel) horoLabel.textContent = `Actual: ${evalData.currentHoro} hrs`;
 
-    const rules = [
-        { code: '300', label: 'Motor 300h', interval: 300, warn: 30 },
-        { code: '500', label: 'Diésel/Aire 500h', interval: 500, warn: 40 },
-        { code: '1000', label: 'Hidr/Sec 1000h', interval: 1000, warn: 50 }
-    ];
-
-    grid.innerHTML = rules.map(r => {
-        const lastServiceHoro = getLastServiceHorometer(tractorId, r.code);
-        let remaining;
-
-        if (lastServiceHoro !== null) {
-            const elapsed = currentHoro - lastServiceHoro;
-            remaining = Math.round((r.interval - elapsed) * 10) / 10;
-        } else {
-            const nextDue = (Math.floor(currentHoro / r.interval) + 1) * r.interval;
-            remaining = Math.round((nextDue - currentHoro) * 10) / 10;
-        }
-
+    grid.innerHTML = evalData.items.map(r => {
         let badgeClass = 'bg-emerald-50 border-emerald-200 text-emerald-900';
-        let statusText = `Faltan ${remaining}h`;
+        let statusText = `Faltan ${r.remaining}h`;
 
-        if (remaining <= 0) {
+        if (r.isOverdue) {
             badgeClass = 'bg-red-100 border-red-400 text-red-900 animate-pulse';
-            statusText = `Vencido ${Math.abs(remaining)}h`;
-        } else if (remaining <= r.warn) {
+            statusText = `Vencido ${Math.abs(r.remaining)}h`;
+        } else if (r.isWarning) {
             badgeClass = 'bg-amber-100 border-amber-400 text-amber-950';
-            statusText = `⚠️ En ${remaining}h`;
+            statusText = `⚠️ En ${r.remaining}h`;
         }
 
         return `

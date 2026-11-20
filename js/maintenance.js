@@ -132,7 +132,7 @@ export async function submitMaintenanceRequest(syncFn) {
         prioridad: localFaultPriority || 'NORMAL',
         descripcion_falla: desc,
         estatus: 'PENDIENTE',
-        id_usuario_reporta: state.currentUser.id_usuario
+        id_usuario_solicita: state.currentUser.id_usuario
     };
 
     try {
@@ -176,7 +176,7 @@ export function renderRole2MyTickets() {
     if (!list || !state.currentUser) return;
 
     const mine = (state.dbTickets || []).filter(t =>
-        state.currentUser.rol === 'ADMIN' || t.id_usuario_reporta === state.currentUser.id_usuario
+        state.currentUser.rol === 'ADMIN' || t.id_usuario_solicita === state.currentUser.id_usuario
     ).slice(0, 15);
 
     if (mine.length === 0) {
@@ -311,8 +311,11 @@ export async function submitRepairClosure(syncFn) {
   let finalWorkText = workText;
   if (selectedPreventiveTags.size > 0) {
     const tags = Array.from(selectedPreventiveTags).map(c => `[PM-${c}H]`).join(' ');
-    const lastLog = (state.dbFuelLogs || []).find(l => l.id_tractor === ticket.id_tractor && l.horometro !== null);
-    const horoTag = lastLog ? `[HORO:${lastLog.horometro}]` : '';
+    const horos = (state.dbFuelLogs || [])
+      .filter(l => l.id_tractor === ticket.id_tractor && l.horometro !== null && !isNaN(parseFloat(l.horometro)))
+      .map(l => parseFloat(l.horometro));
+    const maxHoro = horos.length > 0 ? Math.max(...horos) : null;
+    const horoTag = maxHoro !== null ? `[HORO:${maxHoro}]` : '';
     finalWorkText = `${tags} ${horoTag} ${workText}`.trim();
   }
 
@@ -320,7 +323,7 @@ export async function submitRepairClosure(syncFn) {
     trabajo_realizado: finalWorkText,
     estatus: localResolutionStatus || 'FINALIZADO',
     motivo_espera: localResolutionStatus === 'EN_ESPERA' ? document.getElementById('select-wait-reason').value : null,
-    id_usuario_taller: state.currentUser.id_usuario,
+    id_usuario_repara: state.currentUser.id_usuario,
     fecha_cierre: localResolutionStatus === 'FINALIZADO' ? new Date().toISOString() : null
   };
 
@@ -343,9 +346,25 @@ export async function submitRepairClosure(syncFn) {
       await sbFetch('evidencias_servicio', { method: 'POST', body: JSON.stringify(photoPayloads) });
     }
 
+    // Regresar tractor a ACTIVO automáticamente si quedó FINALIZADO y no hay más tickets urgentes abiertos
+    if ((localResolutionStatus || 'FINALIZADO') === 'FINALIZADO') {
+      const otherUrgentOpen = (state.dbTickets || []).some(t =>
+        t.id_tractor === ticket.id_tractor &&
+        t.id_servicio !== state.activeRepairTicketId &&
+        t.estatus !== 'FINALIZADO' &&
+        t.prioridad === 'URGENTE'
+      );
+      if (!otherUrgentOpen) {
+        await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(ticket.id_tractor)}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ estatus_operativo: 'ACTIVO' })
+        });
+      }
+    }
+
     closeRole3Panel();
     if (syncFn) await syncFn(false);
-    showToast('✔ Servicio actualizado correctamente en Taller.', 'success');
+    showToast('✔ Servicio actualizado y tractor reactivado correctamente.', 'success');
   } catch (err) {
     handleAppError('Cierre de taller', err);
   } finally {
