@@ -5,6 +5,11 @@ import { sendTicketWhatsAppAlert } from './maintenance.js';
 
 let isSavingFuel = false;
 
+function canChooseChargeRanch() {
+    if (!state.currentUser) return false;
+    return state.currentUser.rol === 'ADMIN' || (state.currentUser.rol === 'DIESEL' && !state.currentUser.id_rancho);
+}
+
 export function getTractorLastTelemetry(tractorId) {
     const logs = (state.dbFuelLogs || []).filter(l => l.id_tractor === tractorId);
     const lastLogWithHoro = logs.find(l => l.horometro !== null && l.horometro !== undefined && !isNaN(parseFloat(l.horometro)));
@@ -72,7 +77,7 @@ export function updateCrossRanchBanner() {
     const tr = state.dbTractors.find(t => t.id_tractor === state.selectedTractorId);
     if (!tr) return;
 
-    const activeChargeRanch = state.currentUser.rol === 'ADMIN' ?
+    const activeChargeRanch = canChooseChargeRanch() ?
         document.getElementById('select-admin-charge-ranch').value :
         state.currentUser.id_rancho;
 
@@ -207,7 +212,7 @@ export function openFuelConfirmModal() {
         return;
     }
 
-    const ranchoCarga = state.currentUser.rol === 'ADMIN' ?
+    const ranchoCarga = canChooseChargeRanch() ?
         document.getElementById('select-admin-charge-ranch').value :
         state.currentUser.id_rancho;
 

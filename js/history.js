@@ -2,41 +2,50 @@ import { RANCH_NAMES, CATALOGO_ACTIVIDADES, state } from './config.js';
 import { sbFetch, showToast, handleAppError } from './api.js';
 
 export function renderHistoryScreen() {
-  if (!state.currentUser) return;
-  const kpiGrid = document.getElementById('history-kpi-grid');
-  const listEl = document.getElementById('history-records-list');
-  const areaTag = document.getElementById('history-area-tag');
-  const areaTitle = document.getElementById('history-area-title');
-  const isAdmin = state.currentUser.rol === 'ADMIN';
+    if (!state.currentUser) return;
+    const kpiGrid = document.getElementById('history-kpi-grid');
+    const listEl = document.getElementById('history-records-list');
+    const areaTag = document.getElementById('history-area-tag');
+    const areaTitle = document.getElementById('history-area-title');
+    const isAdmin = state.currentUser.rol === 'ADMIN';
+    const isMobileDiesel = state.currentUser.rol === 'DIESEL' && !state.currentUser.id_rancho;
 
-  let mode = 'DIESEL';
-  let ranchFilter = 'TODOS';
+    let mode = 'DIESEL';
+    let ranchFilter = 'TODOS';
 
-  if (isAdmin) {
-    mode = document.getElementById('filter-history-tab').value;
-    ranchFilter = document.getElementById('filter-history-ranch').value;
-  } else if (state.currentUser.rol === 'DIESEL') {
-    mode = 'DIESEL';
-    ranchFilter = state.currentUser.id_rancho;
-  } else {
-    mode = 'MNT';
-  }
+    if (isAdmin) {
+        mode = document.getElementById('filter-history-tab').value;
+        ranchFilter = document.getElementById('filter-history-ranch').value;
+    } else if (state.currentUser.rol === 'DIESEL') {
+        mode = 'DIESEL';
+        ranchFilter = state.currentUser.id_rancho || 'TODOS';
+    } else {
+        mode = 'MNT';
+    }
 
-  if (mode === 'DIESEL') {
-    areaTag.textContent = ranchFilter === 'TODOS' ? 'Consolidado 4 Ranchos' : `Bomba: ${RANCH_NAMES[ranchFilter]}`;
-    areaTitle.textContent = 'Bitácora de Cargas de Diésel';
+    if (mode === 'DIESEL') {
+        if (isMobileDiesel) {
+            areaTag.textContent = `Mis Registros · ${state.currentUser.nombre}`;
+            areaTitle.textContent = 'Mis Cargas de Diésel';
+        } else {
+            areaTag.textContent = ranchFilter === 'TODOS' ? 'Consolidado 4 Ranchos' : `Bomba: ${RANCH_NAMES[ranchFilter]}`;
+            areaTitle.textContent = 'Bitácora de Cargas de Diésel';
+        }
 
-    const logs = ranchFilter === 'TODOS'
-      ? state.dbFuelLogs
-      : state.dbFuelLogs.filter(l => l.id_rancho_carga === ranchFilter);
+        let logs = state.dbFuelLogs;
+        if (isMobileDiesel) {
+            logs = logs.filter(l => l.id_usuario_diesel === state.currentUser.id_usuario);
+        } else if (ranchFilter !== 'TODOS') {
+            logs = logs.filter(l => l.id_rancho_carga === ranchFilter);
+        }
 
-    const totalL = logs.reduce((acc, x) => acc + parseFloat(x.litros || 0), 0);
-    const crossCount = logs.filter(l => {
-      const tr = state.dbTractors.find(t => t.id_tractor === l.id_tractor);
-      return tr && tr.id_rancho_base !== l.id_rancho_carga;
-    }).length;
+        const totalL = logs.reduce((acc, x) => acc + parseFloat(x.litros || 0), 0);
+        const crossCount = logs.filter(l => {
+            const tr = state.dbTractors.find(t => t.id_tractor === l.id_tractor);
+            return tr && tr.id_rancho_base !== l.id_rancho_carga;
+        }).length;
 
-    kpiGrid.innerHTML = `
+        kpiGrid.innerHTML = `
       <div class="bg-amber-50 rounded-xl p-2.5">
         <span class="block text-base font-extrabold text-harvestGold">${totalL.toFixed(1)} L</span>
         <span class="text-[10px] font-semibold text-stone-600">Total Despachado</span>
@@ -47,17 +56,17 @@ export function renderHistoryScreen() {
       </div>
     `;
 
-    if (logs.length === 0) {
-      listEl.innerHTML = `<p class="text-xs text-stone-500 text-center py-4">Sin registros de diésel para este filtro.</p>`;
-      return;
-    }
+        if (logs.length === 0) {
+            listEl.innerHTML = `<p class="text-xs text-stone-500 text-center py-4">Sin registros de diésel para este filtro.</p>`;
+            return;
+        }
 
-    listEl.innerHTML = logs.map(l => {
-      const tr = state.dbTractors.find(t => t.id_tractor === l.id_tractor);
-      const isCross = tr && tr.id_rancho_base !== l.id_rancho_carga;
-      const dateStr = l.fecha_hora ? new Date(l.fecha_hora).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '';
+        listEl.innerHTML = logs.map(l => {
+                    const tr = state.dbTractors.find(t => t.id_tractor === l.id_tractor);
+                    const isCross = tr && tr.id_rancho_base !== l.id_rancho_carga;
+                    const dateStr = l.fecha_hora ? new Date(l.fecha_hora).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '';
 
-      const adminControls = (isAdmin && l.id_carga !== 'OFFLINE') ? `
+                    const adminControls = (isAdmin && l.id_carga !== 'OFFLINE') ? `
         <div class="flex items-center justify-end gap-2 pt-2 mt-1.5 border-t border-stone-100">
           <button type="button" onclick="openAdminEditFuel(${l.id_carga})"
             class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-forest font-extrabold text-[11px] border border-emerald-200">
@@ -70,7 +79,7 @@ export function renderHistoryScreen() {
         </div>
       ` : '';
 
-      return `
+                    return `
         <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-1">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-1.5">

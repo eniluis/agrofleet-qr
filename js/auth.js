@@ -5,14 +5,14 @@ import { renderFilteredActivities, updateCrossRanchBanner } from './diesel.js';
 import { renderDraftPhotos, renderRole2MyTickets, renderRole3TicketList } from './maintenance.js';
 import { renderHistoryScreen } from './history.js';
 
-export async function handleLoginSubmit(event) {
+export async function handleLoginSubmit(event, syncFn) {
     event.preventDefault();
     const idInput = document.getElementById('login-username').value.trim().toLowerCase();
     const pinInput = document.getElementById('login-pin').value.trim();
-    await authenticateUser(idInput, pinInput);
+    await authenticateUser(idInput, pinInput, syncFn);
 }
 
-export async function authenticateUser(idUsuario, pin) {
+export async function authenticateUser(idUsuario, pin, syncFn) {
     const btn = document.getElementById('btn-login-submit');
     btn.disabled = true;
     btn.textContent = 'VERIFICANDO EN SUPABASE...';
@@ -26,7 +26,7 @@ export async function authenticateUser(idUsuario, pin) {
             document.getElementById('login-pin').value = '';
             return;
         }
-        await startUserSession(rows[0]);
+        await startUserSession(rows[0], syncFn);
     } catch (err) {
         handleAppError('Inicio de sesión', err);
     } finally {
@@ -36,7 +36,6 @@ export async function authenticateUser(idUsuario, pin) {
 }
 
 export async function startUserSession(user, syncFn) {
-
     state.currentUser = user;
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
 
@@ -173,7 +172,8 @@ export function switchScreen(screenName) {
     } else if (screenName === 'diesel') {
         document.getElementById('qr-scanner-module').classList.remove('hidden');
         document.getElementById('screen-diesel').classList.remove('hidden');
-        document.getElementById('admin-ranch-selector-box').classList.toggle('hidden', state.currentUser.rol !== 'ADMIN');
+        const canChooseRanch = state.currentUser.rol === 'ADMIN' || (state.currentUser.rol === 'DIESEL' && !state.currentUser.id_rancho);
+        document.getElementById('admin-ranch-selector-box').classList.toggle('hidden', !canChooseRanch);
         renderQuickTractors();
         renderFilteredActivities();
         updateCrossRanchBanner();
