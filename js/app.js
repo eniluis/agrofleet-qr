@@ -186,9 +186,24 @@ window.addEventListener('online', () => { if (!state.isOnline) toggleNetworkMode
 window.addEventListener('offline', () => { if (state.isOnline) toggleNetworkMode(); });
 
 // ==================== ARRANQUE DE APLICACIÓN ====================
+// ==================== AUTO-SINCRONIZACIÓN AL VOLVER A LA APP ====================
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.isOnline && state.currentUser) {
+        syncAllFromSupabase(false);
+    }
+});
+
+window.addEventListener('focus', () => {
+    if (state.isOnline && state.currentUser) {
+        syncAllFromSupabase(false);
+    }
+});
+
+// ==================== ARRANQUE DE APLICACIÓN ====================
 window.addEventListener('DOMContentLoaded', async() => {
     loadOfflineQueue();
     renderFilteredActivities();
+
     const savedSession = sessionStorage.getItem(SESSION_KEY);
     if (savedSession) {
         try {
@@ -196,6 +211,17 @@ window.addEventListener('DOMContentLoaded', async() => {
             await startUserSession(user, syncAllFromSupabase);
         } catch (e) {
             sessionStorage.removeItem(SESSION_KEY);
+            if (state.isOnline) await syncAllFromSupabase(false);
         }
+    } else if (state.isOnline) {
+        // Pre-carga los datos desde Supabase mientras el usuario escribe su PIN
+        syncAllFromSupabase(false);
     }
+
+    // Sincronización silenciosa periódica cada 45 segundos
+    setInterval(() => {
+        if (state.isOnline && state.currentUser && document.visibilityState === 'visible') {
+            syncAllFromSupabase(false);
+        }
+    }, 45000);
 });

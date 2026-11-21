@@ -36,6 +36,7 @@ export async function authenticateUser(idUsuario, pin) {
 }
 
 export async function startUserSession(user, syncFn) {
+
     state.currentUser = user;
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
 
@@ -64,7 +65,6 @@ export async function startUserSession(user, syncFn) {
     }
 
     buildRoleNavigation(user.rol);
-    if (syncFn) await syncFn(false);
 
     if (user.rol === 'ADMIN' || user.rol === 'DIESEL') {
         switchScreen('diesel');
@@ -72,6 +72,10 @@ export async function startUserSession(user, syncFn) {
         switchScreen('report-fault');
     } else if (user.rol === 'TECNICO_MNT') {
         switchScreen('workshop');
+    }
+
+    if (syncFn) {
+        await syncFn(false);
     }
 
     showToast(`Bienvenido, ${user.nombre} (${ranchName}).`, 'success');
