@@ -28,6 +28,7 @@ import {
     confirmAndSaveFuelLoad
 } from './diesel.js';
 import {
+    selectFaultArea,
     setPriority,
     handlePhotoUpload,
     removeDraftPhoto,
@@ -162,6 +163,7 @@ Object.assign(window, {
     openFuelConfirmModal,
     closeFuelConfirmModal,
     confirmAndSaveFuelLoad: () => confirmAndSaveFuelLoad(syncAllFromSupabase),
+    selectFaultArea,
     setPriority,
     handlePhotoUpload,
     removeDraftPhoto,
@@ -185,7 +187,6 @@ Object.assign(window, {
 window.addEventListener('online', () => { if (!state.isOnline) toggleNetworkMode(); });
 window.addEventListener('offline', () => { if (state.isOnline) toggleNetworkMode(); });
 
-// ==================== ARRANQUE DE APLICACIÓN ====================
 // ==================== AUTO-SINCRONIZACIÓN AL VOLVER A LA APP ====================
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && state.isOnline && state.currentUser) {
@@ -214,11 +215,9 @@ window.addEventListener('DOMContentLoaded', async() => {
             if (state.isOnline) await syncAllFromSupabase(false);
         }
     } else if (state.isOnline) {
-        // Pre-carga los datos desde Supabase mientras el usuario escribe su PIN
         syncAllFromSupabase(false);
     }
 
-    // Sincronización silenciosa periódica cada 45 segundos
     setInterval(() => {
         if (state.isOnline && state.currentUser && document.visibilityState === 'visible') {
             syncAllFromSupabase(false);

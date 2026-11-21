@@ -11,6 +11,53 @@ export const RANCH_NAMES = {
 export const OFFLINE_QUEUE_KEY = 'agrofleet_offline_queue_v2';
 export const SESSION_KEY = 'agrofleet_user_session_v2';
 
+export const ESPECIALIDADES_MNT = {
+    MECANICO: {
+        code: 'MECANICO',
+        label: '🚜 Mecánico',
+        shortLabel: 'Mecánico',
+        responsable: 'Teófilo',
+        requiresTractor: true,
+        phone: '5214581073339' // Teléfono WhatsApp Teófilo
+    },
+    ELECTRICO: {
+        code: 'ELECTRICO',
+        label: '⚡ Eléctrico',
+        shortLabel: 'Eléctrico',
+        responsable: 'Teófilo',
+        requiresTractor: false,
+        phone: '5214581073339' // Teléfono WhatsApp Teófilo
+    },
+    SOLDADURA: {
+        code: 'SOLDADURA',
+        label: '🏗️ Soldadura (Corrales/Inst.)',
+        shortLabel: 'Soldadura',
+        responsable: 'Roberto Maldonado',
+        requiresTractor: false,
+        phone: '5214922889474' // Pon aquí el WhatsApp de Roberto Maldonado
+    },
+    HIDRAULICO: {
+        code: 'HIDRAULICO',
+        label: '💧 Hidráulico (Agua)',
+        shortLabel: 'Hidráulico',
+        responsable: 'Roberto Maldonado',
+        requiresTractor: false,
+        phone: '5214922889474' // Pon aquí el WhatsApp de Roberto Maldonado
+    },
+    ORDENA: {
+        code: 'ORDENA',
+        label: '🥛 Salas de Ordeña',
+        shortLabel: 'Ordeña',
+        responsable: 'Mauricio / Jesús Espino',
+        requiresTractor: false,
+        phoneByRanch: {
+            EDEN: '5214651206668', // WhatsApp Mauricio Espino
+            MATANUZKA: '5214581217077' // WhatsApp Jesús Espino
+        },
+        phone: '521XXXXXXXXXX'
+    }
+};
+
 export const CATALOGO_ACTIVIDADES = [
     // CAMPO
     { id: 1, tarea: 'Sembrar maíz', area: 'CAMPO', areaLabel: 'Campo' },
@@ -96,6 +143,7 @@ export const state = {
     dbEvidences: [],
     selectedTractorId: null,
     selectedAreaFilter: 'TODAS',
+    selectedFaultArea: 'MECANICO',
     selectedPriority: 'URGENTE',
     selectedResolution: 'FINALIZADO',
     activeTicketIdForRole3: null,

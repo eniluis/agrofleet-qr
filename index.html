@@ -349,8 +349,37 @@
                         <span class="text-[10px] font-extrabold px-2 py-1 rounded-lg bg-orange-100 text-barnTerra">PENDIENTE</span>
                     </div>
 
+                    <!-- SELECTOR DE ÁREA / ESPECIALIDAD -->
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-stone-700">Área de Mantenimiento *</label>
+                        <div id="fault-area-selector" class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="selectFaultArea('MECANICO')" data-area="MECANICO" class="fault-area-btn py-2.5 px-3 rounded-xl text-xs font-extrabold border-2 border-forest bg-emerald-50 text-forest text-left transition shadow-sm">
+                                🚜 Mecánico
+                            </button>
+                            <button type="button" onclick="selectFaultArea('ELECTRICO')" data-area="ELECTRICO" class="fault-area-btn py-2.5 px-3 rounded-xl text-xs font-bold border border-stone-300 bg-white text-stone-700 text-left transition">
+                                ⚡ Eléctrico
+                            </button>
+                            <button type="button" onclick="selectFaultArea('SOLDADURA')" data-area="SOLDADURA" class="fault-area-btn py-2.5 px-3 rounded-xl text-xs font-bold border border-stone-300 bg-white text-stone-700 text-left transition">
+                                🏗️ Soldadura / Corrales
+                            </button>
+                            <button type="button" onclick="selectFaultArea('HIDRAULICO')" data-area="HIDRAULICO" class="fault-area-btn py-2.5 px-3 rounded-xl text-xs font-bold border border-stone-300 bg-white text-stone-700 text-left transition">
+                                💧 Hidráulico (Agua)
+                            </button>
+                            <button type="button" onclick="selectFaultArea('ORDENA')" data-area="ORDENA" class="fault-area-btn col-span-2 py-2.5 px-3 rounded-xl text-xs font-bold border border-stone-300 bg-white text-stone-700 text-left transition">
+                                🥛 Salas de Ordeña (Edén / Matanuzka)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- UBICACIÓN / ZONA FIJA (visible en Eléctrico, Soldadura, Hidráulico y Ordeña) -->
+                    <div id="fault-zone-box" class="hidden">
+                        <label for="input-fault-zone" class="block text-xs font-bold text-stone-700 mb-1">Ubicación / Corral / Sala afectada *</label>
+                        <input id="input-fault-zone" type="text" placeholder="Ej. Corral 4 bebedero norte / Sala de ordeña fosa 2" class="w-full bg-creamSand border border-stone-300 focus:border-barnTerra focus:outline-none rounded-xl py-2.5 px-3 text-sm font-semibold text-stone-800"
+                        />
+                    </div>
+
                     <div>
-                        <label for="select-fault-rancho" class="block text-xs font-bold text-stone-700 mb-1">Rancho donde se encuentra la unidad</label>
+                        <label for="select-fault-rancho" class="block text-xs font-bold text-stone-700 mb-1">Rancho donde se encuentra la falla</label>
                         <select id="select-fault-rancho" class="w-full bg-creamSand border border-stone-300 rounded-xl py-2 px-3 text-xs font-bold text-stone-800">
                             <option value="EDEN">El Edén</option>
                             <option value="MATANUZKA">Matanuzka</option>
@@ -369,7 +398,7 @@
 
                     <div>
                         <label for="input-fault-desc" class="block text-xs font-bold text-stone-700 mb-1">Descripción de la Falla *</label>
-                        <textarea id="input-fault-desc" rows="3" placeholder="Ej. Fuga en manguera hidráulica o fallo de encendido..." class="w-full bg-creamSand border border-stone-300 focus:border-barnTerra focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
+                        <textarea id="input-fault-desc" rows="3" placeholder="Ej. Fuga en manguera hidráulica, corto eléctrico o bebedero roto..." class="w-full bg-creamSand border border-stone-300 focus:border-barnTerra focus:outline-none rounded-xl p-3 text-sm text-stone-800"></textarea>
                     </div>
 
                     <div>
@@ -459,7 +488,7 @@
                         <label class="block text-xs font-bold text-stone-700 mb-1.5">Estatus del Servicio</label>
                         <div class="grid grid-cols-2 gap-2.5">
                             <button type="button" id="status-btn-finalizado" onclick="setResolutionStatus('FINALIZADO')" class="py-3 px-2.5 rounded-xl border-2 border-emeraldAgro bg-emerald-50 text-forest font-extrabold text-xs transition text-center">
-                                ✔ FINALIZADO<br><span class="text-[10px] font-normal">Tractor operativo</span>
+                                ✔ FINALIZADO<br><span class="text-[10px] font-normal">Unidad / área operativa</span>
                             </button>
                             <button type="button" id="status-btn-espera" onclick="setResolutionStatus('EN_ESPERA')" class="py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center">
                                 ⏳ EN ESPERA<br><span class="text-[10px] font-normal">Refacción / Taller ext.</span>

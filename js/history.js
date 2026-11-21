@@ -1,5 +1,27 @@
-import { RANCH_NAMES, CATALOGO_ACTIVIDADES, state } from './config.js';
+import { RANCH_NAMES, CATALOGO_ACTIVIDADES, ESPECIALIDADES_MNT, state } from './config.js';
 import { sbFetch, showToast, handleAppError } from './api.js';
+
+function getAreaMeta(code) {
+    return ESPECIALIDADES_MNT[code] || ESPECIALIDADES_MNT.MECANICO;
+}
+
+function canTechnicianSeeTicket(ticket) {
+    const user = state.currentUser;
+    if (!user) return false;
+    if (user.rol === 'ADMIN') return true;
+
+    const ticketArea = ticket.especialidad || 'MECANICO';
+    if (user.especialidades_asignadas) {
+        const allowedAreas = user.especialidades_asignadas.split(',').map(s => s.trim().toUpperCase());
+        if (!allowedAreas.includes(ticketArea.toUpperCase())) return false;
+    }
+
+    if (user.id_rancho && ticket.id_rancho_reporte && ticket.id_rancho_reporte !== user.id_rancho) {
+        return false;
+    }
+
+    return true;
+}
 
 export function renderHistoryScreen() {
     if (!state.currentUser) return;
@@ -97,22 +119,26 @@ export function renderHistoryScreen() {
           ${adminControls}
         </div>
       `;
-    }).join('');
-  } else {
-    areaTag.textContent = 'Control de Taller';
-    areaTitle.textContent = 'Historial de Mantenimientos';
+        }).join('');
+    } else {
+        areaTag.textContent = state.currentUser.rol === 'TECNICO_MNT'
+            ? `Mis Áreas · ${state.currentUser.nombre}`
+            : 'Control de Taller';
+        areaTitle.textContent = 'Historial de Mantenimientos';
 
-    let tickets = state.dbTickets;
-    if (state.currentUser.rol === 'SOLICITANTE_MNT') {
-      tickets = state.dbTickets.filter(t => t.id_usuario_solicita === state.currentUser.id_usuario);
-    } else if (ranchFilter !== 'TODOS') {
-      tickets = state.dbTickets.filter(t => t.id_rancho_reporte === ranchFilter);
-    }
+        let tickets = state.dbTickets;
+        if (state.currentUser.rol === 'SOLICITANTE_MNT') {
+            tickets = state.dbTickets.filter(t => t.id_usuario_solicita === state.currentUser.id_usuario);
+        } else if (state.currentUser.rol === 'TECNICO_MNT') {
+            tickets = state.dbTickets.filter(t => canTechnicianSeeTicket(t));
+        } else if (ranchFilter !== 'TODOS') {
+            tickets = state.dbTickets.filter(t => t.id_rancho_reporte === ranchFilter);
+        }
 
-    const openC = tickets.filter(t => t.estatus !== 'FINALIZADO').length;
-    const doneC = tickets.filter(t => t.estatus === 'FINALIZADO').length;
+        const openC = tickets.filter(t => t.estatus !== 'FINALIZADO').length;
+        const doneC = tickets.filter(t => t.estatus === 'FINALIZADO').length;
 
-    kpiGrid.innerHTML = `
+        kpiGrid.innerHTML = `
       <div class="bg-orange-50 rounded-xl p-2.5">
         <span class="block text-base font-extrabold text-barnTerra">${openC}</span>
         <span class="text-[10px] font-semibold text-stone-600">Pendientes / Espera</span>
@@ -123,8 +149,17 @@ export function renderHistoryScreen() {
       </div>
     `;
 
-    listEl.innerHTML = tickets.map(t => {
-      const adminMntControls = isAdmin ? `
+        if (tickets.length === 0) {
+            listEl.innerHTML = `<p class="text-xs text-stone-500 text-center py-4">Sin registros de mantenimiento para este filtro.</p>`;
+            return;
+        }
+
+        listEl.innerHTML = tickets.map(t => {
+            const areaMeta = getAreaMeta(t.especialidad);
+            const sujeto = t.id_tractor ? `#${t.id_tractor}` : (t.ubicacion_zona || 'Zona Fija');
+            const ranchoLabel = RANCH_NAMES[t.id_rancho_reporte] || t.id_rancho_reporte || '';
+
+            const adminMntControls = isAdmin ? `
         <div class="flex items-center justify-end gap-2 pt-2 mt-1.5 border-t border-stone-100">
           <button type="button" onclick="openAdminEditMnt(${t.id_servicio})"
             class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-forest font-extrabold text-[11px] border border-emerald-200">
@@ -137,171 +172,177 @@ export function renderHistoryScreen() {
         </div>
       ` : '';
 
-      return `
-        <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-1">
-          <div class="flex justify-between items-center">
-            <strong class="text-xs text-forest">Ticket #${t.id_servicio} · #${t.id_tractor}</strong>
-            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.estatus === 'FINALIZADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-barnTerra'}">${t.estatus}</span>
+            return `
+        <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-1.5">
+          <div class="flex justify-between items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-emerald-50 text-forest border border-emerald-200 font-extrabold text-[10px]">${areaMeta.shortLabel}</span>
+              <strong class="text-xs text-forest">Ticket #${t.id_servicio} · ${sujeto}</strong>
+            </div>
+            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${t.estatus === 'FINALIZADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-barnTerra'}">${t.estatus}</span>
           </div>
           <p class="text-xs text-stone-800">${t.descripcion_falla}</p>
+          ${ranchoLabel ? `<p class="text-[11px] text-stone-500">Rancho: <strong>${ranchoLabel}</strong></p>` : ''}
           ${t.trabajo_realizado ? `<p class="text-xs text-emeraldAgro bg-emerald-50 p-2 rounded-lg"><strong>Solución:</strong> ${t.trabajo_realizado}</p>` : ''}
           ${adminMntControls}
         </div>
       `;
-    }).join('');
-  }
+        }).join('');
+    }
 }
 
 export function openAdminEditFuel(idCarga) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
-  const log = state.dbFuelLogs.find(x => x.id_carga === idCarga);
-  if (!log) return;
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
+    const log = state.dbFuelLogs.find(x => x.id_carga === idCarga);
+    if (!log) return;
 
-  state.adminEditContext = { type: 'DIESEL', id: idCarga };
-  document.getElementById('admin-edit-title').textContent = `Editar Carga #${idCarga}`;
-  document.getElementById('admin-edit-diesel-fields').classList.remove('hidden');
-  document.getElementById('admin-edit-mnt-fields').classList.add('hidden');
+    state.adminEditContext = { type: 'DIESEL', id: idCarga };
+    document.getElementById('admin-edit-title').textContent = `Editar Carga #${idCarga}`;
+    document.getElementById('admin-edit-diesel-fields').classList.remove('hidden');
+    document.getElementById('admin-edit-mnt-fields').classList.add('hidden');
 
-  const trcSel = document.getElementById('edit-fuel-tractor');
-  trcSel.innerHTML = state.dbTractors.map(t => `<option value="${t.id_tractor}">#${t.id_tractor} — ${t.modelo}</option>`).join('');
-  trcSel.value = log.id_tractor;
+    const trcSel = document.getElementById('edit-fuel-tractor');
+    trcSel.innerHTML = state.dbTractors.map(t => `<option value="${t.id_tractor}">#${t.id_tractor} — ${t.modelo}</option>`).join('');
+    trcSel.value = log.id_tractor;
 
-  document.getElementById('edit-fuel-rancho').value = log.id_rancho_carga;
-  document.getElementById('edit-fuel-liters').value = log.litros;
-  document.getElementById('edit-fuel-horo').value = log.horometro || '';
+    document.getElementById('edit-fuel-rancho').value = log.id_rancho_carga;
+    document.getElementById('edit-fuel-liters').value = log.litros;
+    document.getElementById('edit-fuel-horo').value = log.horometro || '';
 
-  const actSel = document.getElementById('edit-fuel-activity');
-  actSel.innerHTML = CATALOGO_ACTIVIDADES.map(item => {
-    const val = `[${item.id}] ${item.tarea} (${item.areaLabel})`;
-    return `<option value="${val}">${val}</option>`;
-  }).join('');
+    const actSel = document.getElementById('edit-fuel-activity');
+    actSel.innerHTML = CATALOGO_ACTIVIDADES.map(item => {
+        const val = `[${item.id}] ${item.tarea} (${item.areaLabel})`;
+        return `<option value="${val}">${val}</option>`;
+    }).join('');
 
-  if (!Array.from(actSel.options).some(o => o.value === log.actividad)) {
-    const opt = document.createElement('option');
-    opt.value = log.actividad;
-    opt.textContent = log.actividad;
-    actSel.prepend(opt);
-  }
-  actSel.value = log.actividad;
+    if (!Array.from(actSel.options).some(o => o.value === log.actividad)) {
+        const opt = document.createElement('option');
+        opt.value = log.actividad;
+        opt.textContent = log.actividad;
+        actSel.prepend(opt);
+    }
+    actSel.value = log.actividad;
 
-  document.getElementById('modal-admin-edit').classList.remove('hidden');
+    document.getElementById('modal-admin-edit').classList.remove('hidden');
 }
 
 export function openAdminEditMnt(idServicio) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
-  const ticket = state.dbTickets.find(x => x.id_servicio === idServicio);
-  if (!ticket) return;
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
+    const ticket = state.dbTickets.find(x => x.id_servicio === idServicio);
+    if (!ticket) return;
 
-  state.adminEditContext = { type: 'MNT', id: idServicio };
-  document.getElementById('admin-edit-title').textContent = `Editar Ticket #${idServicio}`;
-  document.getElementById('admin-edit-diesel-fields').classList.add('hidden');
-  document.getElementById('admin-edit-mnt-fields').classList.remove('hidden');
+    state.adminEditContext = { type: 'MNT', id: idServicio };
+    document.getElementById('admin-edit-title').textContent = `Editar Ticket #${idServicio}`;
+    document.getElementById('admin-edit-diesel-fields').classList.add('hidden');
+    document.getElementById('admin-edit-mnt-fields').classList.remove('hidden');
 
-  const trcSel = document.getElementById('edit-mnt-tractor');
-  trcSel.innerHTML = state.dbTractors.map(t => `<option value="${t.id_tractor}">#${t.id_tractor} — ${t.modelo}</option>`).join('');
-  trcSel.value = ticket.id_tractor;
+    const trcSel = document.getElementById('edit-mnt-tractor');
+    trcSel.innerHTML = `<option value="">-- Sin tractor (Zona Fija) --</option>` +
+        state.dbTractors.map(t => `<option value="${t.id_tractor}">#${t.id_tractor} — ${t.modelo}</option>`).join('');
+    trcSel.value = ticket.id_tractor || '';
 
-  document.getElementById('edit-mnt-rancho').value = ticket.id_rancho_reporte || 'EDEN';
-  document.getElementById('edit-mnt-prio').value = ticket.prioridad || 'NORMAL';
-  document.getElementById('edit-mnt-desc').value = ticket.descripcion_falla || '';
-  document.getElementById('edit-mnt-work').value = ticket.trabajo_realizado || '';
+    document.getElementById('edit-mnt-rancho').value = ticket.id_rancho_reporte || 'EDEN';
+    document.getElementById('edit-mnt-prio').value = ticket.prioridad || 'NORMAL';
+    document.getElementById('edit-mnt-desc').value = ticket.descripcion_falla || '';
+    document.getElementById('edit-mnt-work').value = ticket.trabajo_realizado || '';
 
-  document.getElementById('modal-admin-edit').classList.remove('hidden');
+    document.getElementById('modal-admin-edit').classList.remove('hidden');
 }
 
 export function closeAdminEditModal() {
-  state.adminEditContext = null;
-  document.getElementById('modal-admin-edit').classList.add('hidden');
+    state.adminEditContext = null;
+    document.getElementById('modal-admin-edit').classList.add('hidden');
 }
 
 export async function saveAdminRecordEdit(syncFn) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN' || !state.adminEditContext) return;
-  const btn = document.getElementById('btn-admin-save-edit');
-  btn.disabled = true;
-  btn.textContent = 'GUARDANDO...';
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN' || !state.adminEditContext) return;
+    const btn = document.getElementById('btn-admin-save-edit');
+    btn.disabled = true;
+    btn.textContent = 'GUARDANDO...';
 
-  try {
-    if (state.adminEditContext.type === 'DIESEL') {
-      const litros = parseFloat(document.getElementById('edit-fuel-liters').value);
-      if (isNaN(litros) || litros <= 0) {
-        showToast('Ingresa litros válidos.', 'error');
-        return;
-      }
-      const horo = parseFloat(document.getElementById('edit-fuel-horo').value);
-      await sbFetch(`cargas_diesel?id_carga=eq.${state.adminEditContext.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          id_tractor: document.getElementById('edit-fuel-tractor').value,
-          id_rancho_carga: document.getElementById('edit-fuel-rancho').value,
-          litros,
-          horometro: isNaN(horo) ? null : horo,
-          actividad: document.getElementById('edit-fuel-activity').value
-        })
-      });
-      showToast(`✔ Carga #${state.adminEditContext.id} actualizada por Admin.`, 'success');
-    } else if (state.adminEditContext.type === 'MNT') {
-      const desc = document.getElementById('edit-mnt-desc').value.trim();
-      if (!desc) {
-        showToast('La descripción de la falla no puede quedar vacía.', 'error');
-        return;
-      }
-      const work = document.getElementById('edit-mnt-work').value.trim();
-      await sbFetch(`servicios_mantenimiento?id_servicio=eq.${state.adminEditContext.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          id_tractor: document.getElementById('edit-mnt-tractor').value,
-          id_rancho_reporte: document.getElementById('edit-mnt-rancho').value,
-          prioridad: document.getElementById('edit-mnt-prio').value,
-          descripcion_falla: desc,
-          trabajo_realizado: work || null
-        })
-      });
-      showToast(`✔ Ticket #${state.adminEditContext.id} actualizado por Admin.`, 'success');
+    try {
+        if (state.adminEditContext.type === 'DIESEL') {
+            const litros = parseFloat(document.getElementById('edit-fuel-liters').value);
+            if (isNaN(litros) || litros <= 0) {
+                showToast('Ingresa litros válidos.', 'error');
+                return;
+            }
+            const horo = parseFloat(document.getElementById('edit-fuel-horo').value);
+            await sbFetch(`cargas_diesel?id_carga=eq.${state.adminEditContext.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    id_tractor: document.getElementById('edit-fuel-tractor').value,
+                    id_rancho_carga: document.getElementById('edit-fuel-rancho').value,
+                    litros,
+                    horometro: isNaN(horo) ? null : horo,
+                    actividad: document.getElementById('edit-fuel-activity').value
+                })
+            });
+            showToast(`✔ Carga #${state.adminEditContext.id} actualizada por Admin.`, 'success');
+        } else if (state.adminEditContext.type === 'MNT') {
+            const desc = document.getElementById('edit-mnt-desc').value.trim();
+            if (!desc) {
+                showToast('La descripción de la falla no puede quedar vacía.', 'error');
+                return;
+            }
+            const work = document.getElementById('edit-mnt-work').value.trim();
+            const trcVal = document.getElementById('edit-mnt-tractor').value;
+            await sbFetch(`servicios_mantenimiento?id_servicio=eq.${state.adminEditContext.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    id_tractor: trcVal || null,
+                    id_rancho_reporte: document.getElementById('edit-mnt-rancho').value,
+                    prioridad: document.getElementById('edit-mnt-prio').value,
+                    descripcion_falla: desc,
+                    trabajo_realizado: work || null
+                })
+            });
+            showToast(`✔ Ticket #${state.adminEditContext.id} actualizado por Admin.`, 'success');
+        }
+
+        closeAdminEditModal();
+        if (syncFn) await syncFn(false);
+    } catch (err) {
+        handleAppError('Edición de registro', err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar Cambios';
     }
-
-    closeAdminEditModal();
-    if (syncFn) await syncFn(false);
-  } catch (err) {
-    handleAppError('Edición de registro', err);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '💾 Guardar Cambios';
-  }
 }
 
 export async function adminDeleteFuel(idCarga, syncFn) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
-  if (!confirm(`¿Seguro que deseas eliminar permanentemente la carga #${idCarga}?`)) return;
-  try {
-    await sbFetch(`cargas_diesel?id_carga=eq.${idCarga}`, { method: 'DELETE' });
-    if (syncFn) await syncFn(false);
-    showToast(`🗑️ Carga #${idCarga} eliminada.`, 'info');
-  } catch (err) {
-    handleAppError('Eliminación de carga', err);
-  }
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
+    if (!confirm(`¿Seguro que deseas eliminar permanentemente la carga #${idCarga}?`)) return;
+    try {
+        await sbFetch(`cargas_diesel?id_carga=eq.${idCarga}`, { method: 'DELETE' });
+        if (syncFn) await syncFn(false);
+        showToast(`🗑️ Carga #${idCarga} eliminada.`, 'info');
+    } catch (err) {
+        handleAppError('Eliminación de carga', err);
+    }
 }
 
 export async function adminDeleteMnt(idServicio, syncFn) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
-  if (!confirm(`¿Seguro que deseas eliminar permanentemente el ticket #${idServicio}?`)) return;
-  try {
-    await sbFetch(`servicios_mantenimiento?id_servicio=eq.${idServicio}`, { method: 'DELETE' });
-    if (syncFn) await syncFn(false);
-    showToast(`🗑️ Ticket #${idServicio} eliminado.`, 'info');
-  } catch (err) {
-    handleAppError('Eliminación de ticket', err);
-  }
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
+    if (!confirm(`¿Seguro que deseas eliminar permanentemente el ticket #${idServicio}?`)) return;
+    try {
+        await sbFetch(`servicios_mantenimiento?id_servicio=eq.${idServicio}`, { method: 'DELETE' });
+        if (syncFn) await syncFn(false);
+        showToast(`🗑️ Ticket #${idServicio} eliminado.`, 'info');
+    } catch (err) {
+        handleAppError('Eliminación de ticket', err);
+    }
 }
 
 export function exportDataCSV() {
-  let csv = 'ID_CARGA,TRACTOR,RANCHO_CARGA,LITROS,ACTIVIDAD,HOROMETRO,USUARIO,FECHA\n';
-  state.dbFuelLogs.forEach(l => {
-    csv += `${l.id_carga},${l.id_tractor},"${RANCH_NAMES[l.id_rancho_carga] || l.id_rancho_carga}",${l.litros},"${l.actividad}",${l.horometro || ''},${l.id_usuario_diesel},${l.fecha_hora}\n`;
-  });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `AgroFleet_Reporte_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  showToast('CSV descargado.', 'success');
+    let csv = 'ID_CARGA,TRACTOR,RANCHO_CARGA,LITROS,ACTIVIDAD,HOROMETRO,USUARIO,FECHA\n';
+    state.dbFuelLogs.forEach(l => {
+        csv += `${l.id_carga},${l.id_tractor},"${RANCH_NAMES[l.id_rancho_carga] || l.id_rancho_carga}",${l.litros},"${l.actividad}",${l.horometro || ''},${l.id_usuario_diesel},${l.fecha_hora}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `AgroFleet_Reporte_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    showToast('CSV descargado.', 'success');
 }
