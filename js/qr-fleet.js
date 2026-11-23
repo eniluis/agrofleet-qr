@@ -30,7 +30,16 @@ export function renderQuickTractors() {
         state.selectedTractorId = state.dbTractors[0].id_tractor;
     }
 
-    container.innerHTML = state.dbTractors.map(t => {
+    // Mostrar máximo 3 tractores en los botones rápidos (el resto se busca con el escáner QR)
+    let visibleTractors = state.dbTractors.slice(0, 3);
+    if (state.selectedTractorId && !visibleTractors.some(t => t.id_tractor === state.selectedTractorId)) {
+        const scanned = state.dbTractors.find(t => t.id_tractor === state.selectedTractorId);
+        if (scanned) {
+            visibleTractors = [scanned, ...state.dbTractors.slice(0, 2)];
+        }
+    }
+
+    container.innerHTML = visibleTractors.map(t => {
         const active = t.id_tractor === state.selectedTractorId;
         return `
       <button type="button" onclick="selectTractor('${t.id_tractor}')"
@@ -78,8 +87,7 @@ export function evaluatePreventiveStatus(tractorId) {
 
     const items = rules.map(r => {
         const validTags = r.code === '300' ? ['[PM-300H]', '[PM-1000H]'] :
-            r.code === '500' ? ['[PM-500H]', '[PM-1000H]'] :
-            ['[PM-1000H]'];
+            r.code === '500' ? ['[PM-500H]', '[PM-1000H]'] : ['[PM-1000H]'];
 
         const ticket = (state.dbTickets || []).find(t =>
             t.id_tractor === tractorId &&
@@ -434,88 +442,88 @@ export function renderTractorsCatalog() {
         ${adminBtns}
       </div>
     `;
-  }).join('');
+    }).join('');
 }
 
 export function openAdminEditTractor(idTractor) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
-  const tr = state.dbTractors.find(t => t.id_tractor === idTractor);
-  if (!tr) return;
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
+    const tr = state.dbTractors.find(t => t.id_tractor === idTractor);
+    if (!tr) return;
 
-  editingTractorId = idTractor;
-  document.getElementById('admin-edit-trc-title').textContent = `Editar Tractor #${idTractor}`;
-  document.getElementById('edit-trc-model').value = tr.modelo || '';
-  document.getElementById('edit-trc-rancho').value = tr.id_rancho_base || 'EDEN';
-  document.getElementById('edit-trc-status').value = tr.estatus_operativo || 'ACTIVO';
-  document.getElementById('edit-trc-serial').value = tr.serie || '';
-  document.getElementById('edit-trc-tank').value = tr.capacidad_tanque || '';
+    editingTractorId = idTractor;
+    document.getElementById('admin-edit-trc-title').textContent = `Editar Tractor #${idTractor}`;
+    document.getElementById('edit-trc-model').value = tr.modelo || '';
+    document.getElementById('edit-trc-rancho').value = tr.id_rancho_base || 'EDEN';
+    document.getElementById('edit-trc-status').value = tr.estatus_operativo || 'ACTIVO';
+    document.getElementById('edit-trc-serial').value = tr.serie || '';
+    document.getElementById('edit-trc-tank').value = tr.capacidad_tanque || '';
 
-  document.getElementById('modal-admin-edit-tractor').classList.remove('hidden');
+    document.getElementById('modal-admin-edit-tractor').classList.remove('hidden');
 }
 
 export function closeAdminEditTractorModal() {
-  editingTractorId = null;
-  document.getElementById('modal-admin-edit-tractor').classList.add('hidden');
+    editingTractorId = null;
+    document.getElementById('modal-admin-edit-tractor').classList.add('hidden');
 }
 
 export async function saveAdminTractorEdit(syncFn) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN' || !editingTractorId) return;
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN' || !editingTractorId) return;
 
-  const modelo = document.getElementById('edit-trc-model').value.trim();
-  if (!modelo) {
-    showToast('El modelo del tractor no puede quedar vacío.', 'error');
-    return;
-  }
+    const modelo = document.getElementById('edit-trc-model').value.trim();
+    if (!modelo) {
+        showToast('El modelo del tractor no puede quedar vacío.', 'error');
+        return;
+    }
 
-  const tankVal = parseFloat(document.getElementById('edit-trc-tank').value);
-  const patchData = {
-    modelo,
-    id_rancho_base: document.getElementById('edit-trc-rancho').value,
-    estatus_operativo: document.getElementById('edit-trc-status').value,
-    serie: document.getElementById('edit-trc-serial').value.trim().toUpperCase() || null,
-    capacidad_tanque: isNaN(tankVal) ? null : tankVal
-  };
+    const tankVal = parseFloat(document.getElementById('edit-trc-tank').value);
+    const patchData = {
+        modelo,
+        id_rancho_base: document.getElementById('edit-trc-rancho').value,
+        estatus_operativo: document.getElementById('edit-trc-status').value,
+        serie: document.getElementById('edit-trc-serial').value.trim().toUpperCase() || null,
+        capacidad_tanque: isNaN(tankVal) ? null : tankVal
+    };
 
-  const btn = document.getElementById('btn-admin-save-trc');
-  btn.disabled = true;
-  btn.textContent = 'GUARDANDO...';
+    const btn = document.getElementById('btn-admin-save-trc');
+    btn.disabled = true;
+    btn.textContent = 'GUARDANDO...';
 
-  try {
-    await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(editingTractorId)}`, {
-      method: 'PATCH',
-      body: JSON.stringify(patchData)
-    });
+    try {
+        await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(editingTractorId)}`, {
+            method: 'PATCH',
+            body: JSON.stringify(patchData)
+        });
 
-    const editedId = editingTractorId;
-    closeAdminEditTractorModal();
-    if (syncFn) await syncFn(false);
-    showToast(`✔ Tractor #${editedId} actualizado correctamente.`, 'success');
-  } catch (err) {
-    handleAppError('Edición de tractor', err);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '💾 Guardar';
-  }
+        const editedId = editingTractorId;
+        closeAdminEditTractorModal();
+        if (syncFn) await syncFn(false);
+        showToast(`✔ Tractor #${editedId} actualizado correctamente.`, 'success');
+    } catch (err) {
+        handleAppError('Edición de tractor', err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar';
+    }
 }
 
 export async function adminDeleteTractor(idTractor, syncFn) {
-  if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
-  if (!confirm(`¿Seguro que deseas eliminar el tractor #${idTractor}? (Solo se podrá eliminar si no tiene cargas o reportes asociados).`)) return;
+    if (!state.currentUser || state.currentUser.rol !== 'ADMIN') return;
+    if (!confirm(`¿Seguro que deseas eliminar el tractor #${idTractor}? (Solo se podrá eliminar si no tiene cargas o reportes asociados).`)) return;
 
-  try {
-    await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(idTractor)}`, {
-      method: 'DELETE'
-    });
-    if (state.selectedTractorId === idTractor) {
-      state.selectedTractorId = null;
+    try {
+        await sbFetch(`tractores?id_tractor=eq.${encodeURIComponent(idTractor)}`, {
+            method: 'DELETE'
+        });
+        if (state.selectedTractorId === idTractor) {
+            state.selectedTractorId = null;
+        }
+        if (syncFn) await syncFn(false);
+        showToast(`🗑️ Tractor #${idTractor} eliminado.`, 'info');
+    } catch (err) {
+        if (err.message && (err.message.includes('23503') || err.message.includes('foreign key'))) {
+            showToast(`No se puede eliminar #${idTractor} porque ya tiene historial de diésel o mantenimiento. Cámbialo a estatus BAJA en Editar.`, 'error');
+        } else {
+            handleAppError('Eliminación de tractor', err);
+        }
     }
-    if (syncFn) await syncFn(false);
-    showToast(`🗑️ Tractor #${idTractor} eliminado.`, 'info');
-  } catch (err) {
-    if (err.message && (err.message.includes('23503') || err.message.includes('foreign key'))) {
-      showToast(`No se puede eliminar #${idTractor} porque ya tiene historial de diésel o mantenimiento. Cámbialo a estatus BAJA en Editar.`, 'error');
-    } else {
-      handleAppError('Eliminación de tractor', err);
-    }
-  }
 }
