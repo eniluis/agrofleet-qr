@@ -23,6 +23,90 @@ function canTechnicianSeeTicket(ticket) {
     return true;
 }
 
+function computeFuelEfficiencyData() {
+    const byId = new Map();
+    const byTractor = new Map();
+
+    const sorted = [...(state.dbFuelLogs || [])].sort((a, b) => {
+        const tA = a.fecha_hora ? new Date(a.fecha_hora).getTime() : 0;
+        const tB = b.fecha_hora ? new Date(b.fecha_hora).getTime() : 0;
+        if (tA !== tB) return tA - tB;
+        return (Number(a.id_carga) || 0) - (Number(b.id_carga) || 0);
+    });
+
+    const tracker = new Map();
+
+    for (const log of sorted) {
+        const trId = log.id_tractor;
+        if (!tracker.has(trId)) {
+            tracker.set(trId, {
+                lastHoro: null,
+                pendingLiters: 0,
+                totalMeasuredLiters: 0,
+                totalHours: 0,
+                intervals: []
+            });
+        }
+
+        const st = tracker.get(trId);
+        const liters = parseFloat(log.litros) || 0;
+        const horo = log.horometro !== null && log.horometro !== '' && !isNaN(parseFloat(log.horometro)) ?
+            parseFloat(log.horometro) :
+            null;
+
+        if (horo === null) {
+            if (st.lastHoro !== null) {
+                st.pendingLiters += liters;
+            }
+            continue;
+        }
+
+        if (st.lastHoro === null) {
+            st.lastHoro = horo;
+            st.pendingLiters = 0;
+        } else {
+            const deltaHours = Math.round((horo - st.lastHoro) * 100) / 100;
+            const consumedLiters = Math.round((liters + st.pendingLiters) * 100) / 100;
+
+            if (deltaHours > 0) {
+                const lph = Math.round((consumedLiters / deltaHours) * 100) / 100;
+                st.totalMeasuredLiters += consumedLiters;
+                st.totalHours += deltaHours;
+                st.intervals.push({
+                    id_carga: log.id_carga,
+                    deltaHours,
+                    consumedLiters,
+                    lph,
+                    actividad: log.actividad,
+                    fecha_hora: log.fecha_hora,
+                    rancho: log.id_rancho_carga
+                });
+                if (log.id_carga !== undefined && log.id_carga !== null) {
+                    byId.set(log.id_carga, { deltaHours, consumedLiters, lph });
+                }
+            }
+
+            st.lastHoro = horo;
+            st.pendingLiters = 0;
+        }
+    }
+
+    for (const [trId, st] of tracker.entries()) {
+        const avgLph = st.totalHours > 0 ? Math.round((st.totalMeasuredLiters / st.totalHours) * 100) / 100 : null;
+        const lastInterval = st.intervals.length > 0 ? st.intervals[st.intervals.length - 1] : null;
+        byTractor.set(trId, {
+            id_tractor: trId,
+            totalMeasuredLiters: Math.round(st.totalMeasuredLiters * 10) / 10,
+            totalHours: Math.round(st.totalHours * 10) / 10,
+            avgLph,
+            lastInterval,
+            samples: st.intervals.length
+        });
+    }
+
+    return { byId, byTractor };
+}
+
 export function renderHistoryScreen() {
     if (!state.currentUser) return;
     const kpiGrid = document.getElementById('history-kpi-grid');
@@ -45,6 +129,104 @@ export function renderHistoryScreen() {
         mode = 'MNT';
     }
 
+    if (mode === 'RENDIMIENTO' && isAdmin) {
+        areaTag.textContent = ranchFilter === 'TODOS' ? 'Auditoría de Consumo · 4 Ranchos' : `Base: ${RANCH_NAMES[ranchFilter]}`;
+        areaTitle.textContent = 'Rendimiento por Tractor (L/h)';
+
+        const { byTractor } = computeFuelEfficiencyData();
+        let tractors = [...(state.dbTractors || [])];
+        if (ranchFilter !== 'TODOS') {
+            tractors = tractors.filter(t => t.id_rancho_base === ranchFilter);
+        }
+
+        const rows = tractors.map(t => {
+            const stats = byTractor.get(t.id_tractor) || {
+                id_tractor: t.id_tractor,
+                totalMeasuredLiters: 0,
+                totalHours: 0,
+                avgLph: null,
+                lastInterval: null,
+                samples: 0
+            };
+            return { tractor: t, ...stats };
+        }).sort((a, b) => (b.avgLph || -1) - (a.avgLph || -1));
+
+        const measuredRows = rows.filter(r => r.avgLph !== null);
+        const totalHrs = measuredRows.reduce((acc, r) => acc + r.totalHours, 0);
+        const totalLts = measuredRows.reduce((acc, r) => acc + r.totalMeasuredLiters, 0);
+        const globalAvg = totalHrs > 0 ? (totalLts / totalHrs).toFixed(2) : '0.00';
+
+        kpiGrid.innerHTML = `
+      <div class="bg-emerald-50 rounded-xl p-2.5">
+        <span class="block text-base font-extrabold text-forest">${globalAvg} L/h</span>
+        <span class="text-[10px] font-semibold text-stone-600">Promedio Flotilla</span>
+      </div>
+      <div class="bg-amber-50 rounded-xl p-2.5">
+        <span class="block text-base font-extrabold text-harvestGold">${totalHrs.toFixed(1)} hrs</span>
+        <span class="text-[10px] font-semibold text-stone-600">Horas Medidas</span>
+      </div>
+    `;
+
+        if (rows.length === 0) {
+            listEl.innerHTML = `<p class="text-xs text-stone-500 text-center py-4">Sin tractores registrados para este filtro.</p>`;
+            return;
+        }
+
+        listEl.innerHTML = rows.map(r => {
+                    const t = r.tractor;
+                    const ranchLabel = RANCH_NAMES[t.id_rancho_base] || t.id_rancho_base;
+
+                    if (r.avgLph === null) {
+                        return `
+          <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-1 opacity-80">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-stone-600 text-white">#${t.id_tractor}</span>
+                <span class="text-xs font-bold text-stone-800">${t.modelo}</span>
+              </div>
+              <span class="text-[11px] font-bold text-stone-400">Sin medición aún</span>
+            </div>
+            <p class="text-[11px] text-stone-500">Base: ${ranchLabel} · Requiere al menos 2 cargas con horómetro.</p>
+          </div>
+        `;
+                    }
+
+                    const lastLph = r.lastInterval ? r.lastInterval.lph : null;
+                    const isSpike = lastLph !== null && r.samples >= 2 && lastLph > r.avgLph * 1.35;
+
+                    return `
+        <div class="bg-white rounded-2xl p-3.5 border ${isSpike ? 'border-red-400' : 'border-stone-200'} shadow-sm space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-forest text-white shrink-0">#${t.id_tractor}</span>
+              <span class="text-xs font-bold text-stone-800 truncate">${t.modelo}</span>
+            </div>
+            <strong class="text-base font-black text-harvestGold shrink-0">${r.avgLph.toFixed(2)} L/h</strong>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5 bg-creamSand rounded-xl p-2 text-center text-[11px]">
+            <div>
+              <span class="block text-[9px] font-bold uppercase text-stone-400">Horas Trab.</span>
+              <strong class="text-stone-800 font-extrabold">${r.totalHours.toFixed(1)} h</strong>
+            </div>
+            <div>
+              <span class="block text-[9px] font-bold uppercase text-stone-400">Diésel Medido</span>
+              <strong class="text-stone-800 font-extrabold">${r.totalMeasuredLiters.toFixed(1)} L</strong>
+            </div>
+            <div>
+              <span class="block text-[9px] font-bold uppercase text-stone-400">Último Tramo</span>
+              <strong class="${isSpike ? 'text-red-700' : 'text-emeraldAgro'} font-extrabold">${lastLph !== null ? lastLph.toFixed(2) + ' L/h' : '--'}</strong>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-stone-500">
+            <span>Base: <strong>${ranchLabel}</strong> · ${r.samples} tramo${r.samples === 1 ? '' : 's'}</span>
+            ${isSpike ? `<span class="px-2 py-0.5 rounded bg-red-100 text-red-800 font-extrabold text-[10px]">⚠️ Consumo alto reciente</span>` : ''}
+          </div>
+        </div>
+      `;
+        }).join('');
+        return;
+    }
+
     if (mode === 'DIESEL') {
         if (isMobileDiesel) {
             areaTag.textContent = `Mis Registros · ${state.currentUser.nombre}`;
@@ -60,6 +242,8 @@ export function renderHistoryScreen() {
         } else if (ranchFilter !== 'TODOS') {
             logs = logs.filter(l => l.id_rancho_carga === ranchFilter);
         }
+
+        const { byId } = computeFuelEfficiencyData();
 
         const totalL = logs.reduce((acc, x) => acc + parseFloat(x.litros || 0), 0);
         const crossCount = logs.filter(l => {
@@ -84,11 +268,12 @@ export function renderHistoryScreen() {
         }
 
         listEl.innerHTML = logs.map(l => {
-                    const tr = state.dbTractors.find(t => t.id_tractor === l.id_tractor);
-                    const isCross = tr && tr.id_rancho_base !== l.id_rancho_carga;
-                    const dateStr = l.fecha_hora ? new Date(l.fecha_hora).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '';
+            const tr = state.dbTractors.find(t => t.id_tractor === l.id_tractor);
+            const isCross = tr && tr.id_rancho_base !== l.id_rancho_carga;
+            const dateStr = l.fecha_hora ? new Date(l.fecha_hora).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '';
+            const eff = byId.get(l.id_carga);
 
-                    const adminControls = (isAdmin && l.id_carga !== 'OFFLINE') ? `
+            const adminControls = (isAdmin && l.id_carga !== 'OFFLINE') ? `
         <div class="flex items-center justify-end gap-2 pt-2 mt-1.5 border-t border-stone-100">
           <button type="button" onclick="openAdminEditFuel(${l.id_carga})"
             class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-forest font-extrabold text-[11px] border border-emerald-200">
@@ -101,7 +286,7 @@ export function renderHistoryScreen() {
         </div>
       ` : '';
 
-                    return `
+            return `
         <div class="bg-white rounded-2xl p-3.5 border border-stone-200 shadow-sm space-y-1">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-1.5">
@@ -115,6 +300,7 @@ export function renderHistoryScreen() {
             <span>Bomba: <strong>${RANCH_NAMES[l.id_rancho_carga] || l.id_rancho_carga}</strong> ${l.horometro ? '· Horóm: ' + l.horometro : ''}</span>
             <span>${dateStr}</span>
           </div>
+          ${eff ? `<span class="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-forest border border-emerald-200">⚡ Rendimiento tramo: ${eff.lph.toFixed(2)} L/h (${eff.deltaHours} hrs)</span>` : ''}
           ${isCross ? `<span class="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-barnTerra">🚜 Préstamo: Unidad base de ${RANCH_NAMES[tr.id_rancho_base]}</span>` : ''}
           ${adminControls}
         </div>
@@ -335,14 +521,18 @@ export async function adminDeleteMnt(idServicio, syncFn) {
 }
 
 export function exportDataCSV() {
-    let csv = 'ID_CARGA,TRACTOR,RANCHO_CARGA,LITROS,ACTIVIDAD,HOROMETRO,USUARIO,FECHA\n';
+    const { byId } = computeFuelEfficiencyData();
+    let csv = 'ID_CARGA,TRACTOR,RANCHO_CARGA,LITROS,ACTIVIDAD,HOROMETRO,HORAS_TRABAJADAS,RENDIMIENTO_L_HR,USUARIO,FECHA\n';
     state.dbFuelLogs.forEach(l => {
-        csv += `${l.id_carga},${l.id_tractor},"${RANCH_NAMES[l.id_rancho_carga] || l.id_rancho_carga}",${l.litros},"${l.actividad}",${l.horometro || ''},${l.id_usuario_diesel},${l.fecha_hora}\n`;
+        const eff = byId.get(l.id_carga);
+        const hrs = eff ? eff.deltaHours : '';
+        const lph = eff ? eff.lph : '';
+        csv += `${l.id_carga},${l.id_tractor},"${RANCH_NAMES[l.id_rancho_carga] || l.id_rancho_carga}",${l.litros},"${l.actividad}",${l.horometro || ''},${hrs},${lph},${l.id_usuario_diesel},${l.fecha_hora}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `AgroFleet_Reporte_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
-    showToast('CSV descargado.', 'success');
+    showToast('CSV descargado con cálculo de rendimiento.', 'success');
 }
