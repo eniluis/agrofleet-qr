@@ -6,6 +6,10 @@ let html5QrCodeInstance = null;
 let cameraActive = false;
 let editingTractorId = null;
 
+function normalizeKey(str) {
+    return (str || '').toUpperCase().replace(/[\s\-_.]+/g, '');
+}
+
 export function renderQuickTractors() {
     const container = document.getElementById('quick-tractors-list');
     const warnBox = document.getElementById('no-tractors-warning');
@@ -237,6 +241,35 @@ export async function handleCreateTractor(event, syncFn) {
     const cap = parseFloat(document.getElementById('new-trc-tank').value) || null;
     if (!modelo) return;
 
+    // 1. Validación estricta por Número de Serie (ignorando espacios, guiones y puntos)
+    const normSerie = normalizeKey(serie);
+    if (normSerie) {
+        const dupSerial = (state.dbTractors || []).find(
+            t => normalizeKey(t.serie) === normSerie
+        );
+        if (dupSerial) {
+            showToast(`⚠️ Serie "${serie}" ya registrada en #${dupSerial.id_tractor} (${dupSerial.modelo}). Mostrando su QR.`, 'error');
+            renderQRVisualCard(dupSerial);
+            return;
+        }
+    } else {
+        // 2. Aviso preventivo si no pusieron serie y ya existe mismo Modelo en el mismo Rancho
+        const normModel = normalizeKey(modelo);
+        const sameModelRanch = (state.dbTractors || []).find(
+            t => t.id_rancho_base === idRanchoBase && normalizeKey(t.modelo) === normModel
+        );
+        if (sameModelRanch) {
+            const proceed = confirm(
+                `Ya existe "${sameModelRanch.modelo}" (#${sameModelRanch.id_tractor}) en ${RANCH_NAMES[idRanchoBase] || idRanchoBase}.\n\n` +
+                `Si es la misma unidad, cancela y usa su QR.\n¿Confirmas que es una SEGUNDA unidad distinta y deseas darla de alta?`
+            );
+            if (!proceed) {
+                renderQRVisualCard(sameModelRanch);
+                return;
+            }
+        }
+    }
+
     const btn = document.getElementById('btn-create-tractor');
     btn.disabled = true;
     btn.textContent = 'GUARDANDO Y GENERANDO FOLIO...';
@@ -277,7 +310,11 @@ export async function handleCreateTractor(event, syncFn) {
 
         showToast(`✔ Tractor #${savedTractor.id_tractor} guardado y etiqueta QR generada.`, 'success');
     } catch (err) {
-        handleAppError('Alta de tractor', err);
+        if (err.message && (err.message.includes('23505') || err.message.includes('idx_tractores_serie_unica'))) {
+            showToast(`⚠️ Ese número de serie ya está registrado en la base de datos.`, 'error');
+        } else {
+            handleAppError('Alta de tractor', err);
+        }
     } finally {
         btn.disabled = false;
         btn.textContent = 'GUARDAR TRACTOR Y GENERAR QR';
@@ -475,12 +512,24 @@ export async function saveAdminTractorEdit(syncFn) {
         return;
     }
 
+    const serie = document.getElementById('edit-trc-serial').value.trim().toUpperCase();
+    const normSerie = normalizeKey(serie);
+    if (normSerie) {
+        const dupSerial = (state.dbTractors || []).find(
+            t => t.id_tractor !== editingTractorId && normalizeKey(t.serie) === normSerie
+        );
+        if (dupSerial) {
+            showToast(`⚠️ La serie "${serie}" ya pertenece al tractor #${dupSerial.id_tractor}.`, 'error');
+            return;
+        }
+    }
+
     const tankVal = parseFloat(document.getElementById('edit-trc-tank').value);
     const patchData = {
         modelo,
         id_rancho_base: document.getElementById('edit-trc-rancho').value,
         estatus_operativo: document.getElementById('edit-trc-status').value,
-        serie: document.getElementById('edit-trc-serial').value.trim().toUpperCase() || null,
+        serie: serie || null,
         capacidad_tanque: isNaN(tankVal) ? null : tankVal
     };
 
@@ -499,7 +548,11 @@ export async function saveAdminTractorEdit(syncFn) {
         if (syncFn) await syncFn(false);
         showToast(`✔ Tractor #${editedId} actualizado correctamente.`, 'success');
     } catch (err) {
-        handleAppError('Edición de tractor', err);
+        if (err.message && (err.message.includes('23505') || err.message.includes('idx_tractores_serie_unica'))) {
+            showToast(`⚠️ Ese número de serie ya está asignado a otra unidad.`, 'error');
+        } else {
+            handleAppError('Edición de tractor', err);
+        }
     } finally {
         btn.disabled = false;
         btn.textContent = '💾 Guardar';
