@@ -4,7 +4,7 @@ export const WORKSHOP_WHATSAPP_PHONE = '5214581073339';
 
 export const COMPRAS_WHATSAPP = {
     nombre: 'Compras Matanuzka',
-    phone: '5213344143511'
+    phone: '5214589890015'
 };
 
 export const RANCH_NAMES = {
