@@ -1,4 +1,4 @@
-import { RANCH_NAMES, WORKSHOP_WHATSAPP_PHONE, ESPECIALIDADES_MNT, state } from './config.js';
+import { RANCH_NAMES, WORKSHOP_WHATSAPP_PHONE, COMPRAS_WHATSAPP, ESPECIALIDADES_MNT, state } from './config.js';
 import { sbFetch, enqueueOfflineAction, showToast, handleAppError, uploadImageToSupabaseStorage } from './api.js';
 
 let selectedPreventiveTags = new Set();
@@ -75,7 +75,7 @@ export function selectFaultArea(areaCode) {
     }
 }
 
-function showDirectWhatsAppBanner(url, targetName) {
+function showDirectWhatsAppBanner(url, targetName, headerLabel = 'Orden Urgente Registrada') {
     const container = document.getElementById('toast-container');
     if (container) {
         const old = document.getElementById('wa-direct-alert-banner');
@@ -86,7 +86,7 @@ function showDirectWhatsAppBanner(url, targetName) {
         banner.className = 'mb-2 bg-emerald-900 text-white rounded-2xl p-3.5 border-2 border-emerald-400 shadow-lg flex items-center justify-between gap-2.5';
         banner.innerHTML = `
             <div class="text-xs leading-snug">
-                <strong class="block font-extrabold text-amber-300 uppercase text-[10px]">Orden Urgente Registrada</strong>
+                <strong class="block font-extrabold text-amber-300 uppercase text-[10px]">${headerLabel}</strong>
                 <span>Notificar a <strong>${targetName}</strong>:</span>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
@@ -101,8 +101,9 @@ function showDirectWhatsAppBanner(url, targetName) {
         `;
         container.prepend(banner);
     }
+}
 
-    // También colocar botón visible justo encima del botón de envío en Reportar Falla
+function showInlineFaultWhatsAppBox(url, targetName) {
     const submitBtn = document.getElementById('btn-submit-fault');
     if (submitBtn && submitBtn.parentElement) {
         const oldInline = document.getElementById('wa-inline-alert-box');
@@ -151,8 +152,48 @@ export function sendTicketWhatsAppAlert({ idTractor, ubicacionZona, especialidad
     const baseUrl = phone ? `https://wa.me/${phone}` : `https://wa.me/`;
     const url = `${baseUrl}?text=${encodeURIComponent(msg)}`;
 
-    showDirectWhatsAppBanner(url, targetName);
+    showDirectWhatsAppBanner(url, targetName, 'Orden Urgente Registrada');
+    showInlineFaultWhatsAppBox(url, targetName);
     window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+export function sendPurchaseRequestWhatsApp({ ticket, itemsToBuy, diagText }) {
+    const ranchoLabel = RANCH_NAMES[ticket.id_rancho_reporte] || ticket.id_rancho_reporte || 'Sin especificar';
+    const area = getAreaMeta(ticket.especialidad);
+    const tr = ticket.id_tractor ? (state.dbTractors || []).find(t => t.id_tractor === ticket.id_tractor) : null;
+    const activoLine = ticket.id_tractor ?
+        `• *Unidad:* #${ticket.id_tractor}${tr ? ` (${tr.modelo})` : ''}` :
+        `• *Zona / Equipo:* ${ticket.ubicacion_zona || 'Instalación general'}`;
+    const tecnico = state.currentUser ? state.currentUser.nombre : 'Taller';
+    const fechaHora = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+
+    const msg = [
+        `🛒 *SOLICITUD DE COMPRA · AGROFLEET QR*`,
+        `• *Ticket Taller:* #${ticket.id_servicio} (${ticket.prioridad})`,
+        `• *Área:* ${area.shortLabel}`,
+        activoLine,
+        `• *Rancho:* ${ranchoLabel}`,
+        `• *Falla reportada:* ${ticket.descripcion_falla}`,
+        diagText ? `• *Diagnóstico:* ${diagText}` : null,
+        `• *Refacción / Material a comprar:* ${itemsToBuy}`,
+        `• *Solicita:* ${tecnico} · ${fechaHora}`,
+        ``,
+        `_Favor de confirmar cotización / disponibilidad para liberar unidad._`
+    ].filter(Boolean).join('\n');
+
+    const phone = (COMPRAS_WHATSAPP.phone || '').replace(/\D/g, '');
+    const baseUrl = phone ? `https://wa.me/${phone}` : `https://wa.me/`;
+    const url = `${baseUrl}?text=${encodeURIComponent(msg)}`;
+
+    showDirectWhatsAppBanner(url, COMPRAS_WHATSAPP.nombre, 'Requisición de Compra Lista');
+    window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+export function togglePurchaseItemsBox() {
+    const reasonSel = document.getElementById('select-wait-reason');
+    const itemsBox = document.getElementById('purchase-items-box');
+    if (!reasonSel || !itemsBox) return;
+    itemsBox.classList.toggle('hidden', reasonSel.value !== 'Compra de refacción');
 }
 
 export function setPriority(prio) {
@@ -413,6 +454,7 @@ export function renderRole3TicketList() {
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-barnTerra shrink-0">${t.estatus}</span>
         </div>
         <p class="text-stone-800 font-semibold">${t.descripcion_falla}</p>
+        ${t.trabajo_realizado ? `<p class="text-[11px] text-amber-900 bg-amber-50 p-2 rounded-lg font-semibold">⏳ ${t.trabajo_realizado}</p>` : ''}
         <div class="flex items-center justify-between text-[11px] text-stone-500 pt-1 border-t border-stone-100 gap-2">
           <span class="truncate">Rancho: ${RANCH_NAMES[t.id_rancho_reporte] || t.id_rancho_reporte}</span>
           <button type="button" onclick="openTicketForRepair(${t.id_servicio})"
@@ -446,6 +488,9 @@ export function openTicketForRepair(idServicio) {
     document.getElementById('close-ticket-tractor').textContent = sujeto;
     document.getElementById('close-ticket-fault').textContent = ticket.descripcion_falla;
     document.getElementById('input-repair-work').value = ticket.trabajo_realizado || '';
+
+    const purchaseInput = document.getElementById('input-purchase-items');
+    if (purchaseInput) purchaseInput.value = '';
 
     const initPhotos = (state.dbEvidences || []).filter(e => e.id_servicio === idServicio && e.tipo_evidencia === 'FALLA_INICIAL');
     const initBox = document.getElementById('close-ticket-initial-photos');
@@ -487,6 +532,7 @@ export function setResolutionStatus(status) {
         btnEsp.className = 'py-3 px-2.5 rounded-xl border-2 border-harvestGold bg-amber-50 text-barnTerra font-extrabold text-xs transition text-center';
         btnFin.className = 'py-3 px-2.5 rounded-xl border-2 border-stone-200 bg-creamSand text-stone-700 font-bold text-xs transition text-center';
         waitBox.classList.remove('hidden');
+        togglePurchaseItemsBox();
     }
 }
 
@@ -499,6 +545,19 @@ export async function submitRepairClosure(syncFn) {
     if (!workText) {
         showToast('Describe el trabajo realizado o el diagnóstico.', 'error');
         document.getElementById('input-repair-work').focus();
+        return;
+    }
+
+    const isWait = (localResolutionStatus || 'FINALIZADO') === 'EN_ESPERA';
+    const waitReason = isWait ? document.getElementById('select-wait-reason').value : null;
+    const purchaseInput = document.getElementById('input-purchase-items');
+    const itemsToBuy = (isWait && waitReason === 'Compra de refacción' && purchaseInput)
+        ? purchaseInput.value.trim()
+        : '';
+
+    if (isWait && waitReason === 'Compra de refacción' && !itemsToBuy) {
+        showToast('Escribe qué refacción o material se necesita comprar.', 'error');
+        if (purchaseInput) purchaseInput.focus();
         return;
     }
 
@@ -516,6 +575,10 @@ export async function submitRepairClosure(syncFn) {
     }
 
     let finalWorkText = workText;
+    if (itemsToBuy) {
+        finalWorkText = `${workText} | 🛒 Compra solicitada: ${itemsToBuy}`;
+    }
+
     if (combinedTags.size > 0 && ticket.id_tractor) {
         const orderedTags = ['300', '500', '1000'].filter(c => combinedTags.has(c)).map(c => `[PM-${c}H]`).join(' ');
         const horos = (state.dbFuelLogs || [])
@@ -523,15 +586,15 @@ export async function submitRepairClosure(syncFn) {
             .map(l => parseFloat(l.horometro));
         const maxHoro = horos.length > 0 ? Math.max(...horos) : null;
         const horoTag = maxHoro !== null ? `[HORO:${maxHoro}]` : '';
-        finalWorkText = `${orderedTags} ${horoTag} ${workText}`.trim();
+        finalWorkText = `${orderedTags} ${horoTag} ${finalWorkText}`.trim();
     }
 
-    const isFinalized = (localResolutionStatus || 'FINALIZADO') === 'FINALIZADO';
+    const isFinalized = !isWait;
 
     const patchData = {
         trabajo_realizado: finalWorkText,
         estatus: localResolutionStatus || 'FINALIZADO',
-        motivo_espera: localResolutionStatus === 'EN_ESPERA' ? document.getElementById('select-wait-reason').value : null,
+        motivo_espera: waitReason,
         id_usuario_repara: state.currentUser.id_usuario,
         fecha_cierre: isFinalized ? new Date().toISOString() : null
     };
@@ -597,10 +660,19 @@ export async function submitRepairClosure(syncFn) {
         closeRole3Panel();
         if (syncFn) await syncFn(false);
 
-        const extraMsg = deletedSiblingIds.size > 0 ?
-            ` y se depuraron ${deletedSiblingIds.size} orden(es) redundante(s)` :
-            '';
-        showToast(`✔ Servicio guardado${extraMsg}.`, 'success');
+        if (itemsToBuy) {
+            sendPurchaseRequestWhatsApp({
+                ticket,
+                itemsToBuy,
+                diagText: workText
+            });
+            showToast(`✔ En espera · Enviando solicitud a ${COMPRAS_WHATSAPP.nombre}.`, 'success');
+        } else {
+            const extraMsg = deletedSiblingIds.size > 0 ?
+                ` y se depuraron ${deletedSiblingIds.size} orden(es) redundante(s)` :
+                '';
+            showToast(`✔ Servicio guardado${extraMsg}.`, 'success');
+        }
     } catch (err) {
         handleAppError('Cierre de taller', err);
     } finally {
