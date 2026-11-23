@@ -205,13 +205,13 @@ window.addEventListener('DOMContentLoaded', async() => {
     loadOfflineQueue();
     renderFilteredActivities();
 
-    const savedSession = sessionStorage.getItem(SESSION_KEY);
+    const savedSession = localStorage.getItem(SESSION_KEY);
     if (savedSession) {
         try {
             const user = JSON.parse(savedSession);
             await startUserSession(user, syncAllFromSupabase);
         } catch (e) {
-            sessionStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem(SESSION_KEY);
             if (state.isOnline) await syncAllFromSupabase(false);
         }
     } else if (state.isOnline) {

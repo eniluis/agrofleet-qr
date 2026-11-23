@@ -2,7 +2,7 @@ import { RANCH_NAMES, SESSION_KEY, state } from './config.js';
 import { sbFetch, showToast, handleAppError } from './api.js';
 import { stopCameraIfRunning, renderQuickTractors, renderTractorsCatalog } from './qr-fleet.js';
 import { renderFilteredActivities, updateCrossRanchBanner } from './diesel.js';
-import { renderDraftPhotos, renderRole2MyTickets, renderRole3TicketList } from './maintenance.js';
+import { selectFaultArea, renderDraftPhotos, renderRole2MyTickets, renderRole3TicketList } from './maintenance.js';
 import { renderHistoryScreen } from './history.js';
 
 export async function handleLoginSubmit(event, syncFn) {
@@ -37,7 +37,7 @@ export async function authenticateUser(idUsuario, pin, syncFn) {
 
 export async function startUserSession(user, syncFn) {
     state.currentUser = user;
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
 
     const bar = document.getElementById('active-role-bar');
     const badge = document.getElementById('role-pill-badge');
@@ -122,7 +122,7 @@ export function buildRoleNavigation(rol) {
 
 export function logoutUser() {
     state.currentUser = null;
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
     stopCameraIfRunning();
     document.getElementById('login-username').value = '';
     document.getElementById('login-pin').value = '';
@@ -184,8 +184,8 @@ export function switchScreen(screenName) {
         }
         renderTractorsCatalog();
     } else if (screenName === 'report-fault') {
-        document.getElementById('qr-scanner-module').classList.remove('hidden');
         document.getElementById('screen-report-fault').classList.remove('hidden');
+        selectFaultArea('MECANICO');
         if (state.currentUser.id_rancho) {
             document.getElementById('select-fault-rancho').value = state.currentUser.id_rancho;
         }
