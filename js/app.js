@@ -65,6 +65,87 @@ import {
   exportDataCSV,
 } from "./history.js";
 
+// ==================== RECEPCIÓN DE PARÁMETROS DESDE AGROPLAN ====================
+function normalizeRanchParam(rawRanch) {
+  if (!rawRanch) return null;
+  const clean = rawRanch
+    .toString()
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (clean.includes("EDEN")) return "EDEN";
+  if (clean.includes("MATANUZKA")) return "MATANUZKA";
+  if (clean.includes("ESPERANZA")) return "ESPERANZA";
+  if (clean.includes("ARADOS")) return "ARADOS";
+  return null;
+}
+
+function captureIncomingUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const screen = params.get("screen");
+  const tractor = params.get("tractor");
+  const rancho = params.get("rancho");
+  const falla = params.get("falla");
+  const ot = params.get("ot");
+  const prioridad = params.get("prioridad");
+
+  if (!screen && !tractor && !falla && !ot) return;
+
+  state.incomingAgroPlanData = {
+    screen: screen || "report-fault",
+    tractor: tractor ? tractor.trim().toUpperCase() : null,
+    rancho: normalizeRanchParam(rancho),
+    falla: falla ? falla.trim() : "",
+    ot: ot ? ot.trim() : null,
+    prioridad: prioridad ? prioridad.trim().toUpperCase() : "URGENTE",
+  };
+}
+
+export function applyIncomingAgroPlanParams() {
+  const incoming = state.incomingAgroPlanData;
+  if (!incoming || !state.currentUser) return;
+
+  if (incoming.screen === "report-fault") {
+    switchScreen("report-fault");
+    selectFaultArea("MECANICO");
+
+    if (incoming.tractor) {
+      const exists = (state.dbTractors || []).some(
+        (t) => t.id_tractor.toUpperCase() === incoming.tractor,
+      );
+      if (exists) {
+        selectTractor(incoming.tractor);
+      } else {
+        state.selectedTractorId = incoming.tractor;
+      }
+    }
+
+    if (incoming.rancho) {
+      const ranchoSel = document.getElementById("select-fault-rancho");
+      if (ranchoSel) ranchoSel.value = incoming.rancho;
+    }
+
+    setPriority(incoming.prioridad === "NORMAL" ? "NORMAL" : "URGENTE");
+
+    const descEl = document.getElementById("input-fault-desc");
+    if (descEl) {
+      const prefix = incoming.ot ? `[AgroPlan OT #${incoming.ot}] ` : "";
+      descEl.value = `${prefix}${incoming.falla}`.trim();
+    }
+
+    state.incomingOtOrigen = incoming.ot ? Number(incoming.ot) || null : null;
+    showToast(
+      `📋 Datos cargados desde AgroPlan${incoming.ot ? ` (OT #${incoming.ot})` : ""}. Adjunta foto si aplica y envía.`,
+      "info",
+    );
+  }
+
+  state.incomingAgroPlanData = null;
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+
 // ==================== SINCRONIZACIÓN CENTRAL CON SUPABASE ====================
 export async function syncAllFromSupabase(notify = false) {
   if (!state.isOnline) return;
@@ -95,6 +176,7 @@ export async function syncAllFromSupabase(notify = false) {
       ) {
         renderHistoryScreen();
       }
+      applyIncomingAgroPlanParams();
     }
     if (notify) showToast("✔ Datos actualizados desde Supabase.", "success");
   } catch (err) {
@@ -160,7 +242,7 @@ Object.assign(window, {
   syncAllFromSupabase,
   toggleNetworkMode,
   triggerPWAInstall,
-  handleLoginSubmit,
+  handleLoginSubmit: (e) => handleLoginSubmit(e, syncAllFromSupabase),
   logoutUser,
   switchScreen,
   selectTractor,
@@ -232,6 +314,7 @@ window.addEventListener("focus", () => {
 
 // ==================== ARRANQUE DE APLICACIÓN ====================
 window.addEventListener("DOMContentLoaded", async () => {
+  captureIncomingUrlParams();
   loadOfflineQueue();
   renderFilteredActivities();
 
@@ -244,6 +327,15 @@ window.addEventListener("DOMContentLoaded", async () => {
       localStorage.removeItem(SESSION_KEY);
       if (state.isOnline) await syncAllFromSupabase(false);
     }
+  } else if (state.incomingAgroPlanData) {
+    // Auto-acceso directo cuando se abre desde AgroPlan sin sesión previa en el navegador
+    const bridgeUser = {
+      id_usuario: "supervisor_agroplan",
+      nombre: "Supervisor AgroPlan",
+      rol: "SOLICITANTE_MNT",
+      id_rancho: state.incomingAgroPlanData.rancho || null,
+    };
+    await startUserSession(bridgeUser, syncAllFromSupabase);
   } else if (state.isOnline) {
     syncAllFromSupabase(false);
   }
