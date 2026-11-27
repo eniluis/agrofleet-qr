@@ -1276,6 +1276,7 @@
         </section>
 
         <!-- 7. BITÁCORA E HISTORIAL -->
+        <!-- 7. BITÁCORA E HISTORIAL -->
         <section id="screen-history" class="hidden space-y-4">
           <div
             class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm space-y-3"
@@ -1303,6 +1304,7 @@
               </button>
             </div>
 
+            <!-- FILTROS DE ADMINISTRADOR -->
             <div
               id="admin-history-filters"
               class="hidden space-y-2 pt-2 border-t border-stone-100"
@@ -1310,7 +1312,7 @@
               <div class="grid grid-cols-2 gap-2">
                 <select
                   id="filter-history-tab"
-                  onchange="renderHistoryScreen()"
+                  onchange="onHistoryFilterChange()"
                   class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800"
                 >
                   <option value="DIESEL">Ver Cargas de Diésel</option>
@@ -1319,7 +1321,7 @@
                 </select>
                 <select
                   id="filter-history-ranch"
-                  onchange="renderHistoryScreen()"
+                  onchange="onHistoryFilterChange()"
                   class="bg-creamSand border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800"
                 >
                   <option value="TODOS">Todos los Ranchos</option>
@@ -1331,12 +1333,108 @@
               </div>
             </div>
 
+            <!-- FILTRO POR CALENDARIO Y RANGO DE FECHAS -->
+            <div class="pt-2 border-t border-stone-100 space-y-2">
+              <div class="flex items-center justify-between gap-1">
+                <span
+                  class="text-[10px] font-extrabold uppercase tracking-wider text-stone-500"
+                  >Rango Rápido:</span
+                >
+                <div class="flex gap-1">
+                  <button
+                    type="button"
+                    onclick="setHistoryQuickRange('HOY')"
+                    class="px-2 py-0.5 rounded-md bg-sandCard hover:bg-emerald-100 text-[10px] font-bold text-stone-700 border border-stone-300"
+                  >
+                    Hoy
+                  </button>
+                  <button
+                    type="button"
+                    onclick="setHistoryQuickRange('SEMANA')"
+                    class="px-2 py-0.5 rounded-md bg-sandCard hover:bg-emerald-100 text-[10px] font-bold text-stone-700 border border-stone-300"
+                  >
+                    Semana
+                  </button>
+                  <button
+                    type="button"
+                    onclick="setHistoryQuickRange('MES')"
+                    class="px-2 py-0.5 rounded-md bg-sandCard hover:bg-emerald-100 text-[10px] font-bold text-stone-700 border border-stone-300"
+                  >
+                    Este Mes
+                  </button>
+                  <button
+                    type="button"
+                    onclick="setHistoryQuickRange('TODOS')"
+                    class="px-2 py-0.5 rounded-md bg-forest text-white text-[10px] font-bold"
+                  >
+                    Recientes
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label
+                    for="filter-history-from"
+                    class="block text-[10px] font-bold text-stone-500 mb-0.5"
+                    >Desde:</label
+                  >
+                  <input
+                    id="filter-history-from"
+                    type="date"
+                    onchange="onHistoryDateChange()"
+                    class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl px-2.5 py-1.5 text-xs font-bold text-stone-800"
+                  />
+                </div>
+                <div>
+                  <label
+                    for="filter-history-to"
+                    class="block text-[10px] font-bold text-stone-500 mb-0.5"
+                    >Hasta:</label
+                  >
+                  <input
+                    id="filter-history-to"
+                    type="date"
+                    onchange="onHistoryDateChange()"
+                    class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl px-2.5 py-1.5 text-xs font-bold text-stone-800"
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  for="filter-history-tractor"
+                  class="block text-[10px] font-bold text-stone-500 mb-0.5"
+                  >Buscar Unidad / Modelo (Opcional):</label
+                >
+                <div class="relative">
+                  <input
+                    id="filter-history-tractor"
+                    type="search"
+                    oninput="onHistoryFilterChange()"
+                    placeholder="🔍 Ej. TRC-015, 5415, KW2, Jaguar..."
+                    autocomplete="off"
+                    class="w-full bg-creamSand border border-stone-300 focus:border-forest focus:outline-none rounded-xl py-1.5 pl-2.5 pr-8 text-xs font-bold text-stone-800"
+                  />
+                  <button
+                    id="btn-clear-history-tractor"
+                    type="button"
+                    onclick="clearHistoryTractorFilter()"
+                    class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 text-xs font-bold px-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- TARJETAS DE KPIs -->
             <div
               id="history-kpi-grid"
               class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100 text-center"
             ></div>
           </div>
 
+          <!-- LISTA DE REGISTROS (7 EN 7) -->
           <div id="history-records-list" class="space-y-2.5"></div>
         </section>
       </main>

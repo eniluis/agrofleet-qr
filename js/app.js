@@ -59,6 +59,12 @@ import {
 } from "./maintenance.js";
 import {
   renderHistoryScreen,
+  setHistoryQuickRange,
+  onHistoryDateChange,
+  onHistoryFilterChange,
+  loadMoreHistoryRecords,
+  showAllHistoryRecords,
+  resetHistoryPagination,
   openAdminEditFuel,
   openAdminEditMnt,
   closeAdminEditModal,
@@ -294,6 +300,12 @@ Object.assign(window, {
   adminDeleteFuel: (id) => adminDeleteFuel(id, syncAllFromSupabase),
   adminDeleteMnt: (id) => adminDeleteMnt(id, syncAllFromSupabase),
   exportDataCSV,
+  setHistoryQuickRange,
+  onHistoryDateChange,
+  onHistoryFilterChange,
+  loadMoreHistoryRecords,
+  showAllHistoryRecords,
+  resetHistoryPagination,
 });
 
 window.addEventListener("online", () => {
