@@ -1,14 +1,31 @@
-const CACHE_NAME = "agrofleet-qr-v9";
-const ASSETS = ["./", "./index.html", "./manifest.json"];
+const CACHE_NAME = "agrofleet-qr-v31";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./css/styles.css",
+  "./js/app.js",
+  "./js/config.js",
+  "./js/api.js",
+  "./js/auth.js",
+  "./js/qr-fleet.js",
+  "./js/diesel.js",
+  "./js/maintenance.js",
+  "./js/history.js",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       for (const asset of ASSETS) {
         try {
-          await cache.add(asset);
+          const req = new Request(asset, { cache: "no-store" });
+          const res = await fetch(req);
+          if (res && res.ok) {
+            await cache.put(asset, res);
+          }
         } catch (err) {
-          console.warn("[SW] No se pudo cachear:", asset);
+          console.warn("[SW] No se pudo pre-cachear:", asset);
         }
       }
     }),
@@ -26,33 +43,48 @@ self.addEventListener("activate", (event) => {
             .filter((key) => key !== CACHE_NAME)
             .map((key) => caches.delete(key)),
         ),
-      ),
+      )
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
   // Nunca cachear peticiones de datos a Supabase ni métodos distintos a GET
-  if (
-    event.request.method !== "GET" ||
-    event.request.url.includes("supabase.co")
-  ) {
-    event.respondWith(fetch(event.request));
+  if (req.method !== "GET" || req.url.includes("supabase.co")) {
+    event.respondWith(fetch(req));
     return;
   }
 
-  // Estrategia Network-First para archivos de la app (HTML, JS, CSS)
+  const isSameOrigin = new URL(req.url).origin === self.location.origin;
+
+  // Para archivos propios (HTML, JS, CSS): forzar consulta fresca a GitHub (no-store) y actualizar caché
+  if (isSameOrigin) {
+    event.respondWith(
+      fetch(req, { cache: "no-store" })
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(req, { ignoreSearch: true })),
+    );
+    return;
+  }
+
+  // Para recursos externos (Tailwind CDN, fuentes, librerías QR): red primero con respaldo en caché
   event.respondWith(
-    fetch(event.request)
+    fetch(req)
       .then((response) => {
-        if (response && response.status === 200 && response.type === "basic") {
+        if (response && response.status === 200) {
           const clone = response.clone();
-          caches
-            .open(CACHE_NAME)
-            .then((cache) => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
         }
         return response;
       })
-      .catch(() => caches.match(event.request)),
+      .catch(() => caches.match(req)),
   );
 });

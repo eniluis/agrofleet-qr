@@ -219,9 +219,28 @@ function toggleNetworkMode() {
 }
 
 // ==================== SERVICE WORKER E INSTALACIÓN PWA ====================
+// ==================== SERVICE WORKER E INSTALACIÓN PWA ====================
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    navigator.serviceWorker
+      .register("./sw.js", { updateViaCache: "none" })
+      .then((reg) => {
+        // Buscar actualizaciones cada vez que el usuario vuelve a abrir la app
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") {
+            reg.update().catch(() => {});
+          }
+        });
+      })
+      .catch(() => {});
+
+    // Si un nuevo SW toma el control tras un git push, recargar para aplicar los cambios
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
   });
 }
 
